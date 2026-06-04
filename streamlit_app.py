@@ -5,18 +5,23 @@ import os
 import sqlite3
 import pandas as pd
 
+# Load environment variables
 load_dotenv()
 
+# Configure Gemini API
 genai.configure(
     api_key=os.getenv("GEMINI_API_KEY").strip()
 )
 
 model = genai.GenerativeModel("gemini-2.5-flash")
 
-st.title("AI SQL Query Generator")
+# UI
+st.title("🤖 AI SQL Query Generator")
+st.caption("Convert natural language into SQL queries and execute them instantly.")
 
 user_input = st.text_area(
-    "Enter your question"
+    "Enter your question",
+    placeholder="Example: Show customers with salary above 100000"
 )
 
 if st.button("Generate SQL"):
@@ -35,24 +40,28 @@ if st.button("Generate SQL"):
     city
 
     Rules:
-    1. Return only SQL
-    2. No explanation
-    3. No markdown
-    4. Use only the customers table
+    1. Return only SQL.
+    2. No explanation.
+    3. No markdown.
+    4. Use only the customers table.
 
     Request:
     {user_input}
     """
 
-    response = model.generate_content(prompt)
-
-    sql_query = response.text.strip()
-
-    st.subheader("Generated SQL")
-    st.code(sql_query, language="sql")
-
     try:
 
+        # Generate SQL
+        with st.spinner("Generating SQL..."):
+            response = model.generate_content(prompt)
+
+        sql_query = response.text.strip()
+
+        # Display SQL
+        st.subheader("Generated SQL")
+        st.code(sql_query, language="sql")
+
+        # Execute SQL
         conn = sqlite3.connect("database.db")
 
         result = pd.read_sql_query(
@@ -60,10 +69,24 @@ if st.button("Generate SQL"):
             conn
         )
 
-        st.subheader("Results")
-        st.dataframe(result)
-
         conn.close()
+
+        # Display Results
+        st.subheader("Results")
+        st.dataframe(
+            result,
+            hide_index=True
+        )
+
+        # Download Button
+        csv = result.to_csv(index=False)
+
+        st.download_button(
+            label="📥 Download Results",
+            data=csv,
+            file_name="results.csv",
+            mime="text/csv"
+        )
 
     except Exception as e:
 
