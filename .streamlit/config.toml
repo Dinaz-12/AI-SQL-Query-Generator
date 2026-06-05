@@ -1,0 +1,16 @@
+[theme]
+primaryColor = "#FFC107"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F5F5F5"
+textColor = "#121212"
+font = "sans serif"
+
+[client]
+showErrorDetails = true
+
+[logger]
+level = "info"
+
+[ui]
+hideTopBar = false
+hideFooter = false
