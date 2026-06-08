@@ -1,6 +1,7 @@
 import streamlit as st
 import google.generativeai as genai
 from dotenv import load_dotenv
+import base64
 import os
 import sqlite3
 import pandas as pd
@@ -23,11 +24,24 @@ from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_JUSTIFY, TA_RIGHT
 from PIL import Image as PILImage
 
 # =============================================================================
+# Brand Assets
+# =============================================================================
+APP_DIR = Path(__file__).resolve().parent
+LOGO_PATH = APP_DIR / "di_logo.png"
+FAVICON_PATH = APP_DIR / "favicon.png"
+
+
+def _logo_base64() -> str:
+    with open(LOGO_PATH, "rb") as logo_file:
+        return base64.b64encode(logo_file.read()).decode()
+
+
+# =============================================================================
 # Page Config (MUST BE FIRST)
 # =============================================================================
 st.set_page_config(
-    page_title="AI Data Analyst",
-    page_icon="📊",
+    page_title="AI Data Analyst | DataInsight",
+    page_icon=str(FAVICON_PATH),
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -244,10 +258,129 @@ custom_css = f"""
         margin: 0.5rem 0;
         border-radius: 4px;
     }}
+
+    /* Branding */
+    [data-testid="stSidebar"] [data-testid="stLogo"] {{
+        padding-bottom: 0.25rem;
+    }}
+
+    .sidebar-brand {{
+        margin: 0.5rem 0 0;
+    }}
+
+    .brand-sidebar-name {{
+        color: {primary_yellow};
+        font-size: 1.15rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        margin: 0;
+        line-height: 1.3;
+    }}
+
+    .brand-sidebar-tagline {{
+        color: #888;
+        font-size: 0.68rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        margin: 0.35rem 0 0;
+    }}
+
+    .sidebar-divider {{
+        height: 1px;
+        background: rgba(255, 193, 7, 0.25);
+        margin: 1.25rem 0;
+    }}
+
+    .app-hero {{
+        text-align: center !important;
+        padding: 1.75rem 1rem 2rem;
+        width: 100%;
+        max-width: 40rem;
+        margin: 0 auto;
+    }}
+
+    [data-testid="stMarkdown"] .app-hero,
+    [data-testid="stMarkdown"] .app-hero * {{
+        text-align: center !important;
+        letter-spacing: normal !important;
+        word-spacing: normal !important;
+        text-justify: auto !important;
+    }}
+
+    .app-hero-logo {{
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: {primary_black};
+        border-radius: 18px;
+        padding: 14px;
+        margin-bottom: 1.25rem;
+        box-shadow: 0 12px 40px rgba(18, 18, 18, 0.14);
+        border: 1px solid rgba(255, 193, 7, 0.15);
+    }}
+
+    .app-hero-logo img {{
+        display: block;
+        width: 88px;
+        height: 88px;
+        object-fit: contain;
+    }}
+
+    .app-hero-title {{
+        color: {primary_black} !important;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        font-size: clamp(1.75rem, 4vw, 2.75rem);
+        font-weight: 800 !important;
+        margin: 0;
+        padding: 0;
+        letter-spacing: normal !important;
+        word-spacing: normal !important;
+        line-height: 1.2;
+        text-align: center !important;
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
+    }}
+
+    .app-hero-subtitle {{
+        color: #666 !important;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        font-size: clamp(0.95rem, 2vw, 1.1rem);
+        font-weight: 400;
+        margin: 0.65rem auto 0;
+        max-width: 32rem;
+        line-height: 1.5;
+        letter-spacing: normal !important;
+        word-spacing: normal !important;
+        text-align: center !important;
+    }}
+
+    .app-hero-badge {{
+        display: inline-block;
+        margin-top: 1rem;
+        padding: 0.35rem 0.85rem;
+        background: rgba(255, 193, 7, 0.12);
+        color: {primary_black} !important;
+        border: 1px solid rgba(255, 193, 7, 0.35);
+        border-radius: 999px;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        font-size: 0.75rem;
+        font-weight: 600;
+        letter-spacing: normal !important;
+        word-spacing: normal !important;
+        text-transform: none;
+        text-align: center !important;
+    }}
 </style>
 """
 
 st.markdown(custom_css, unsafe_allow_html=True)
+
+st.logo(
+    str(LOGO_PATH),
+    size="large",
+    icon_image=str(LOGO_PATH),
+)
 
 # =============================================================================
 # Load Environment Variables
@@ -504,8 +637,13 @@ def create_pdf_title_page(story, primary_yellow: str, primary_black: str):
         fontName='Helvetica-Bold'
     )
     
-    story.append(Spacer(1, 1.5 * inch))
-    story.append(Paragraph("📊 AI Data Analyst", title_style))
+    story.append(Spacer(1, 1.2 * inch))
+    if LOGO_PATH.exists():
+        logo_img = Image(str(LOGO_PATH), width=1.4 * inch, height=1.4 * inch)
+        logo_img.hAlign = "CENTER"
+        story.append(logo_img)
+        story.append(Spacer(1, 0.35 * inch))
+    story.append(Paragraph("AI Data Analyst", title_style))
     story.append(Paragraph("Professional Report", title_style))
     story.append(Spacer(1, 0.5 * inch))
     
@@ -887,17 +1025,16 @@ def generate_kpis(result: pd.DataFrame):
 # Sidebar Configuration
 # =============================================================================
 with st.sidebar:
-    # Header
-    col1, col2 = st.columns([3, 1])
-    with col1:
-        st.markdown(
-            f"<h2 style='color: {primary_yellow}; font-size: 1.8rem; font-weight: 800; margin: 0;'>AI Data Analyst</h2>",
-            unsafe_allow_html=True
-        )
-    with col2:
-        st.markdown(f"<div style='font-size: 2rem;'>📊</div>", unsafe_allow_html=True)
-    
-    st.markdown("<div style='height: 0.5px; background: rgba(255,193,7,0.3); margin: 1rem 0;'></div>", unsafe_allow_html=True)
+    st.markdown(
+        f"""
+        <div class="sidebar-brand">
+            <p class="brand-sidebar-name">AI Data Analyst</p>
+            <p class="brand-sidebar-tagline">DataInsight Platform</p>
+        </div>
+        <div class="sidebar-divider"></div>
+        """,
+        unsafe_allow_html=True,
+    )
     
     # About Section
     st.markdown(
@@ -943,16 +1080,20 @@ with st.sidebar:
 # =============================================================================
 # Main Page Header
 # =============================================================================
-col1, col2, col3 = st.columns([1, 2, 1])
-with col2:
+_, hero_col, _ = st.columns([1, 5, 1])
+with hero_col:
     st.markdown(
-        f"<div style='text-align: center; padding: 2rem 0;'>"
-        f"<h1 style='color: {primary_black}; font-size: 3rem; font-weight: 800; margin: 0;'>"
-        f"✨ AI Data Analyst</h1>"
-        f"<p style='color: #666; font-size: 1.1rem; margin-top: 0.5rem;'>"
-        f"Generate SQL queries and insights from plain English</p>"
-        f"</div>",
-        unsafe_allow_html=True
+        f"""
+        <div class="app-hero">
+            <div class="app-hero-logo">
+                <img src="data:image/png;base64,{_logo_base64()}" alt="DataInsight logo"/>
+            </div>
+            <div class="app-hero-title">AI Data Analyst</div>
+            <p class="app-hero-subtitle">Generate SQL queries and actionable insights from plain English</p>
+            <span class="app-hero-badge">Powered by DataInsight</span>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
 
 st.markdown(f"<div class='divider'></div>", unsafe_allow_html=True)
