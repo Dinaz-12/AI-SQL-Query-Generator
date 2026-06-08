@@ -36,6 +36,25 @@ def _logo_base64() -> str:
         return base64.b64encode(logo_file.read()).decode()
 
 
+def render_section_header(icon: str, title: str, subtitle: str, *, compact: bool = False) -> None:
+    """Render a consistent section heading with icon, title, and description."""
+    block_class = "section-block section-block-compact" if compact else "section-block"
+    st.markdown(
+        f"""
+        <div class="{block_class}">
+            <div class="section-header">
+                <span class="section-header-icon" aria-hidden="true">{icon}</span>
+                <div class="section-header-text">
+                    <h2 class="section-title">{title}</h2>
+                    <p class="section-header-sub">{subtitle}</p>
+                </div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 # =============================================================================
 # Page Config (MUST BE FIRST)
 # =============================================================================
@@ -67,7 +86,18 @@ custom_css = f"""
 
     /* Main Background */
     .stApp {{
-        background-color: {primary_white};
+        background-color: #F0F2F5;
+    }}
+
+    footer {{
+        visibility: hidden;
+        height: 0;
+    }}
+
+    header[data-testid="stHeader"] {{
+        background: rgba(255, 255, 255, 0.92);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid {border_color};
     }}
 
     /* Sidebar Styling */
@@ -136,16 +166,31 @@ custom_css = f"""
         padding: 1.5rem !important;
     }}
 
-    /* Containers & Cards */
+    /* Containers & Cards (sidebar metric-card unchanged) */
     .card {{
-        background-color: {light_gray};
+        background-color: {primary_white};
+        border: 1px solid {border_color};
         border-left: 4px solid {primary_yellow};
-        padding: 1.5rem;
-        border-radius: 8px;
-        margin: 1rem 0;
+        padding: 1.5rem 1.75rem;
+        border-radius: 12px;
+        margin: 0;
+        box-shadow: 0 2px 8px rgba(18, 18, 18, 0.04);
+        line-height: 1.65;
+        font-size: 0.95rem;
+        color: #444;
     }}
 
-    /* Metric Boxes */
+    .card strong {{
+        color: {primary_black};
+        font-size: 0.8rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        display: block;
+        margin-bottom: 0.85rem;
+    }}
+
+    /* Metric Boxes (sidebar dataset info) */
     .metric-card {{
         background: linear-gradient(135deg, {primary_yellow}15 0%, transparent 100%);
         border: 2px solid {primary_yellow};
@@ -169,38 +214,577 @@ custom_css = f"""
         margin-top: 0.5rem;
     }}
 
-    /* KPI Cards */
-    div[data-testid="stMetric"] {{
-        border-radius: 18px !important;
-        background-color: {primary_white} !important;
-        border: 1px solid rgba(255, 193, 7, 0.18) !important;
-        box-shadow: 0 20px 32px rgba(18, 18, 18, 0.06) !important;
-        padding: 1.15rem 1.25rem !important;
-        margin-bottom: 1rem !important;
-        min-height: 124px;
+    /* ── Main content area only ── */
+    section.main, [data-testid="stMain"] {{
+        background: #F0F2F5;
     }}
 
-    div[data-testid="stMetric"] > div > div:first-child {{
-        color: #666 !important;
-        font-size: 0.95rem !important;
-        letter-spacing: 0.02em !important;
-        margin-bottom: 0.4rem !important;
+    section.main .block-container, [data-testid="stMain"] .block-container {{
+        max-width: 1080px;
+        padding-top: 2rem;
+        padding-bottom: 4rem;
     }}
 
-    div[data-testid="stMetric"] > div > div:nth-child(2) {{
-        color: {primary_black} !important;
-        font-size: 1.95rem !important;
-        font-weight: 700 !important;
+    div[data-testid="stMarkdown"]:has(.app-hero) {{
+        width: 100%;
+        display: flex;
+        justify-content: center;
+    }}
+
+    section.main h1, section.main h2, section.main h3,
+    [data-testid="stMain"] h1, [data-testid="stMain"] h2, [data-testid="stMain"] h3 {{
+        letter-spacing: -0.02em;
+    }}
+
+    /* Content panels */
+    .content-panel {{
+        background: {primary_white};
+        border: 1px solid {border_color};
+        border-radius: 16px;
+        padding: 1.75rem 2rem;
+        margin: 0 0 1.5rem 0;
+        box-shadow: 0 1px 2px rgba(18, 18, 18, 0.04), 0 12px 32px rgba(18, 18, 18, 0.05);
+    }}
+
+    .content-panel-compact {{
+        padding: 1.25rem 1.5rem;
+    }}
+
+    .content-panel-accent {{
+        border-top: 3px solid {primary_yellow};
+    }}
+
+    .panel-header {{
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 1.25rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid {border_color};
+    }}
+
+    .panel-header-text {{
+        flex: 1;
+    }}
+
+    .panel-eyebrow {{
+        color: {primary_yellow};
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        margin: 0 0 0.35rem 0;
+    }}
+
+    .panel-title {{
+        color: {primary_black};
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin: 0;
+        line-height: 1.3;
+    }}
+
+    .panel-desc {{
+        color: #777;
+        font-size: 0.875rem;
+        margin: 0.35rem 0 0;
+        line-height: 1.5;
+    }}
+
+    .panel-badge {{
+        display: inline-flex;
+        align-items: center;
+        padding: 0.3rem 0.75rem;
+        background: rgba(255, 193, 7, 0.12);
+        color: {primary_black};
+        border: 1px solid rgba(255, 193, 7, 0.35);
+        border-radius: 999px;
+        font-size: 0.72rem;
+        font-weight: 600;
+        white-space: nowrap;
+        flex-shrink: 0;
     }}
 
     /* Section Headers */
+    .section-block {{
+        margin: 2.75rem 0 1.25rem 0;
+    }}
+
+    .section-block-compact {{
+        margin-top: 1.5rem;
+    }}
+
     .section-header {{
+        display: flex;
+        align-items: flex-start;
+        gap: 0.85rem;
+        margin: 0;
+        padding: 0;
+    }}
+
+    .section-header-icon {{
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2.5rem;
+        height: 2.5rem;
+        background: rgba(255, 193, 7, 0.14);
+        border: 1px solid rgba(255, 193, 7, 0.28);
+        border-radius: 10px;
+        font-size: 1.1rem;
+        flex-shrink: 0;
+        line-height: 1;
+    }}
+
+    .section-header-text {{
+        flex: 1;
+        min-width: 0;
+        padding-top: 0.1rem;
+    }}
+
+    .section-title {{
+        color: {primary_black} !important;
+        font-size: 1.35rem !important;
+        font-weight: 700 !important;
+        margin: 0 0 0.3rem 0 !important;
+        padding: 0 !important;
+        letter-spacing: -0.02em !important;
+        line-height: 1.3 !important;
+        border: none !important;
+    }}
+
+    .section-header-sub {{
+        color: #777;
+        font-size: 0.875rem;
+        font-weight: 400;
+        margin: 0;
+        line-height: 1.5;
+    }}
+
+    /* Dashboard stat cards (main body only) */
+    .dash-stat-card {{
+        background: {primary_white};
+        border: 1px solid {border_color};
+        border-radius: 14px;
+        padding: 1.15rem 1.25rem;
+        text-align: left;
+        box-shadow: 0 2px 8px rgba(18, 18, 18, 0.04);
+        transition: box-shadow 0.2s ease, border-color 0.2s ease;
+        height: 100%;
+    }}
+
+    .dash-stat-card:hover {{
+        border-color: rgba(255, 193, 7, 0.45);
+        box-shadow: 0 4px 16px rgba(18, 18, 18, 0.08);
+    }}
+
+    .dash-stat-label {{
+        color: #888;
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin: 0;
+    }}
+
+    .dash-stat-value {{
+        color: {primary_black};
+        font-size: 1.65rem;
+        font-weight: 800;
+        margin: 0.4rem 0 0;
+        line-height: 1.2;
+        letter-spacing: -0.02em;
+    }}
+
+    .dash-stat-icon {{
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2rem;
+        height: 2rem;
+        background: rgba(255, 193, 7, 0.15);
+        border-radius: 8px;
+        font-size: 0.95rem;
+        margin-bottom: 0.65rem;
+    }}
+
+    /* KPI Cards (main content metrics) */
+    section.main div[data-testid="stMetric"],
+    [data-testid="stMain"] div[data-testid="stMetric"] {{
+        border-radius: 14px !important;
+        background: linear-gradient(145deg, {primary_white} 0%, #FEFDF8 100%) !important;
+        border: 1px solid rgba(255, 193, 7, 0.22) !important;
+        box-shadow: 0 2px 8px rgba(18, 18, 18, 0.04), 0 8px 24px rgba(18, 18, 18, 0.04) !important;
+        padding: 1.1rem 1.25rem !important;
+        margin-bottom: 0.75rem !important;
+        min-height: 108px;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+    }}
+
+    section.main div[data-testid="stMetric"]:hover,
+    [data-testid="stMain"] div[data-testid="stMetric"]:hover {{
+        border-color: rgba(255, 193, 7, 0.5) !important;
+        box-shadow: 0 4px 16px rgba(18, 18, 18, 0.08) !important;
+    }}
+
+    section.main div[data-testid="stMetric"] > div > div:first-child,
+    [data-testid="stMain"] div[data-testid="stMetric"] > div > div:first-child {{
+        color: #888 !important;
+        font-size: 0.72rem !important;
+        font-weight: 700 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.07em !important;
+        margin-bottom: 0.5rem !important;
+    }}
+
+    section.main div[data-testid="stMetric"] > div > div:nth-child(2),
+    [data-testid="stMain"] div[data-testid="stMetric"] > div > div:nth-child(2) {{
+        color: {primary_black} !important;
+        font-size: 1.75rem !important;
+        font-weight: 800 !important;
+        letter-spacing: -0.02em !important;
+    }}
+
+    .kpi-section-label {{
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin: 1.5rem 0 1rem 0;
+    }}
+
+    .kpi-section-label span {{
+        color: #aaa;
+        font-size: 0.72rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+    }}
+
+    /* Workflow steps */
+    .app-hero-divider {{
+        width: min(100%, 20rem);
+        height: 1px;
+        margin: 1.75rem 0 0;
+        background: linear-gradient(90deg, transparent, rgba(255, 193, 7, 0.5), transparent);
+        border: none;
+    }}
+
+    .workflow-steps {{
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0;
+        margin-top: 1.25rem;
+        width: 100%;
+        flex-wrap: nowrap;
+    }}
+
+    .workflow-step {{
+        display: inline-flex;
+        align-items: center;
+        gap: 0.55rem;
+        padding: 0.45rem 0.85rem;
+        white-space: nowrap;
+    }}
+
+    .workflow-step-num {{
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 1.75rem;
+        height: 1.75rem;
+        background: {primary_black};
+        color: {primary_yellow};
+        border-radius: 50%;
+        font-size: 0.72rem;
+        font-weight: 800;
+        flex-shrink: 0;
+        line-height: 1;
+    }}
+
+    .workflow-step-text {{
+        color: #444;
+        font-size: 0.8rem;
+        font-weight: 600;
+        letter-spacing: 0.01em;
+    }}
+
+    .workflow-connector {{
+        width: 2.25rem;
+        height: 2px;
+        background: {primary_yellow};
+        opacity: 0.45;
+        flex-shrink: 0;
+        align-self: center;
+    }}
+
+    @media (max-width: 680px) {{
+        .workflow-steps {{
+            flex-wrap: wrap;
+            gap: 0.35rem;
+        }}
+
+        .workflow-connector {{
+            display: none;
+        }}
+    }}
+
+    /* Column list panel */
+    .column-list {{
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        max-height: 320px;
+        overflow-y: auto;
+    }}
+
+    .column-list li {{
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.45rem 0;
+        border-bottom: 1px solid #F0F0F0;
+        color: #444;
+        font-size: 0.875rem;
+    }}
+
+    .column-list li:last-child {{
+        border-bottom: none;
+    }}
+
+    .column-dot {{
+        width: 6px;
+        height: 6px;
+        background: {primary_yellow};
+        border-radius: 50%;
+        flex-shrink: 0;
+    }}
+
+    /* SQL code block panel */
+    .sql-panel {{
+        background: {primary_black};
+        border-radius: 12px;
+        padding: 0;
+        overflow: hidden;
+        border: 1px solid rgba(255, 193, 7, 0.2);
+        margin-bottom: 0.5rem;
+    }}
+
+    .sql-panel-header {{
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.65rem 1.25rem;
+        background: rgba(255, 193, 7, 0.08);
+        border-bottom: 1px solid rgba(255, 193, 7, 0.15);
+    }}
+
+    .sql-panel-title {{
+        color: {primary_yellow};
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        margin: 0;
+    }}
+
+    /* Insights panel */
+    .insights-panel {{
+        background: linear-gradient(135deg, #FFFBF0 0%, {primary_white} 100%);
+        border: 1px solid rgba(255, 193, 7, 0.3);
+        border-radius: 14px;
+        padding: 1.75rem 2rem;
+        line-height: 1.75;
+        color: #333;
+        font-size: 0.95rem;
+        box-shadow: 0 2px 12px rgba(255, 193, 7, 0.08);
+    }}
+
+    .insights-panel strong {{
+        color: {primary_black};
+    }}
+
+    /* Chart container */
+    .chart-container {{
+        background: {primary_white};
+        border: 1px solid {border_color};
+        border-radius: 14px;
+        padding: 1.25rem 1.5rem 0.5rem;
+        box-shadow: 0 2px 12px rgba(18, 18, 18, 0.04);
+    }}
+
+    .chart-meta {{
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid #F0F0F0;
+    }}
+
+    .chart-meta-label {{
+        color: #888;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }}
+
+    .chart-type-badge {{
+        display: inline-flex;
+        padding: 0.25rem 0.7rem;
+        background: {primary_black};
+        color: {primary_yellow};
+        border-radius: 6px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+    }}
+
+    /* Results summary bar */
+    .results-summary-bar {{
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        flex-wrap: wrap;
+        padding: 0.85rem 1.25rem;
+        background: #FAFAFA;
+        border: 1px solid {border_color};
+        border-radius: 10px;
+        margin-bottom: 1.25rem;
+    }}
+
+    .results-summary-item {{
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        color: #666;
+        font-size: 0.85rem;
+    }}
+
+    .results-summary-item strong {{
+        color: {primary_black};
+        font-weight: 700;
+    }}
+
+    /* Empty state */
+    .empty-state {{
+        text-align: center;
+        padding: 3.5rem 2rem;
+        background: {primary_white};
+        border: 1px solid {border_color};
+        border-radius: 16px;
+        box-shadow: 0 4px 24px rgba(18, 18, 18, 0.05);
+    }}
+
+    .empty-state-icon {{
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 4.5rem;
+        height: 4.5rem;
+        background: rgba(255, 193, 7, 0.12);
+        border-radius: 16px;
+        font-size: 2rem;
+        margin-bottom: 1.25rem;
+        border: 1px solid rgba(255, 193, 7, 0.25);
+    }}
+
+    .empty-state-title {{
         color: {primary_black};
         font-size: 1.5rem;
+        font-weight: 800;
+        margin: 0 0 0.5rem;
+        letter-spacing: -0.02em;
+    }}
+
+    .empty-state-desc {{
+        color: #777;
+        font-size: 0.95rem;
+        line-height: 1.65;
+        margin: 0 auto 1.75rem;
+        max-width: 28rem;
+    }}
+
+    .empty-state-tips {{
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 0.85rem;
+        text-align: left;
+        margin-top: 0.5rem;
+    }}
+
+    .empty-state-tip {{
+        background: #FAFAFA;
+        border: 1px solid {border_color};
+        border-radius: 10px;
+        padding: 1rem 1.1rem;
+        font-size: 0.82rem;
+        color: #666;
+        line-height: 1.5;
+    }}
+
+    .empty-state-tip strong {{
+        display: block;
+        color: {primary_black};
+        font-size: 0.78rem;
         font-weight: 700;
-        padding-bottom: 0.5rem;
-        border-bottom: 3px solid {primary_yellow};
-        margin: 2rem 0 1rem 0;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 0.35rem;
+    }}
+
+    /* Main-area widget polish */
+    section.main [data-testid="stFileUploader"],
+    [data-testid="stMain"] [data-testid="stFileUploader"] {{
+        background: #FAFAFA !important;
+        border: 2px dashed rgba(255, 193, 7, 0.55) !important;
+        border-radius: 12px !important;
+        padding: 1.25rem !important;
+        transition: border-color 0.2s ease, background 0.2s ease !important;
+    }}
+
+    section.main [data-testid="stFileUploader"]:hover,
+    [data-testid="stMain"] [data-testid="stFileUploader"]:hover {{
+        border-color: {primary_yellow} !important;
+        background: rgba(255, 193, 7, 0.04) !important;
+    }}
+
+    section.main [data-testid="stDataFrame"],
+    [data-testid="stMain"] [data-testid="stDataFrame"] {{
+        border: 1px solid {border_color} !important;
+        border-radius: 12px !important;
+        overflow: hidden !important;
+        box-shadow: 0 1px 4px rgba(18, 18, 18, 0.04) !important;
+    }}
+
+    section.main .stCode, section.main pre,
+    [data-testid="stMain"] .stCode, [data-testid="stMain"] pre {{
+        border-radius: 0 0 12px 12px !important;
+        margin-top: 0 !important;
+        border: none !important;
+    }}
+
+    section.main [data-testid="stExpander"],
+    [data-testid="stMain"] [data-testid="stExpander"] {{
+        border: 1px solid {border_color} !important;
+        border-radius: 12px !important;
+        background: {primary_white} !important;
+    }}
+
+    /* Action bar */
+    .action-bar {{
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        padding: 0.5rem 0 0.25rem;
+    }}
+
+    .action-bar-note {{
+        text-align: center;
+        color: #aaa;
+        font-size: 0.78rem;
+        margin-top: 0.5rem;
     }}
 
     /* Success Messages */
@@ -293,11 +877,31 @@ custom_css = f"""
     }}
 
     .app-hero {{
+        display: flex;
+        flex-direction: column;
+        align-items: center;
         text-align: center !important;
-        padding: 1.75rem 1rem 2rem;
+        padding: 2.5rem 2rem 2rem;
         width: 100%;
-        max-width: 40rem;
-        margin: 0 auto;
+        max-width: 720px;
+        margin: 0 auto 0.5rem;
+        background: {primary_white};
+        border: 1px solid rgba(18, 18, 18, 0.08);
+        border-radius: 20px;
+        box-shadow: 0 2px 4px rgba(18, 18, 18, 0.04), 0 12px 40px rgba(18, 18, 18, 0.07);
+        position: relative;
+        overflow: hidden;
+        box-sizing: border-box;
+    }}
+
+    .app-hero::before {{
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, {primary_yellow}, {primary_black}, {primary_yellow});
     }}
 
     [data-testid="stMarkdown"] .app-hero,
@@ -309,14 +913,14 @@ custom_css = f"""
     }}
 
     .app-hero-logo {{
-        display: inline-flex;
+        display: flex;
         align-items: center;
         justify-content: center;
         background: {primary_black};
         border-radius: 18px;
         padding: 14px;
-        margin-bottom: 1.25rem;
-        box-shadow: 0 12px 40px rgba(18, 18, 18, 0.14);
+        margin: 0 auto 1.35rem;
+        box-shadow: 0 8px 28px rgba(18, 18, 18, 0.12);
         border: 1px solid rgba(255, 193, 7, 0.15);
     }}
 
@@ -330,26 +934,27 @@ custom_css = f"""
     .app-hero-title {{
         color: {primary_black} !important;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-        font-size: clamp(1.75rem, 4vw, 2.75rem);
+        font-size: clamp(1.85rem, 3.5vw, 2.5rem);
         font-weight: 800 !important;
-        margin: 0;
+        margin: 0 auto;
         padding: 0;
-        letter-spacing: normal !important;
+        width: 100%;
+        letter-spacing: -0.025em !important;
         word-spacing: normal !important;
-        line-height: 1.2;
+        line-height: 1.15;
         text-align: center !important;
         text-rendering: optimizeLegibility;
         -webkit-font-smoothing: antialiased;
     }}
 
     .app-hero-subtitle {{
-        color: #666 !important;
+        color: #5c5c5c !important;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-        font-size: clamp(0.95rem, 2vw, 1.1rem);
+        font-size: clamp(0.92rem, 1.8vw, 1.05rem);
         font-weight: 400;
-        margin: 0.65rem auto 0;
-        max-width: 32rem;
-        line-height: 1.5;
+        margin: 0.85rem auto 0;
+        max-width: 30rem;
+        line-height: 1.6;
         letter-spacing: normal !important;
         word-spacing: normal !important;
         text-align: center !important;
@@ -357,16 +962,16 @@ custom_css = f"""
 
     .app-hero-badge {{
         display: inline-block;
-        margin-top: 1rem;
-        padding: 0.35rem 0.85rem;
+        margin-top: 1.15rem;
+        padding: 0.4rem 0.95rem;
         background: rgba(255, 193, 7, 0.12);
         color: {primary_black} !important;
         border: 1px solid rgba(255, 193, 7, 0.35);
         border-radius: 999px;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-        font-size: 0.75rem;
+        font-size: 0.72rem;
         font-weight: 600;
-        letter-spacing: normal !important;
+        letter-spacing: 0.02em !important;
         word-spacing: normal !important;
         text-transform: none;
         text-align: center !important;
@@ -986,9 +1591,11 @@ def generate_kpis(result: pd.DataFrame):
     max_value = numeric_series.max()
     min_value = numeric_series.min()
 
-    st.markdown(
-        f"<div class='section-header' style='margin-top: 1rem;'>📈 KPI Dashboard</div>",
-        unsafe_allow_html=True
+    render_section_header(
+        "📈",
+        "KPI Dashboard",
+        "Key performance indicators computed from your query results",
+        compact=True,
     )
 
     col1, col2, col3, col4 = st.columns(4, gap="medium")
@@ -1080,30 +1687,59 @@ with st.sidebar:
 # =============================================================================
 # Main Page Header
 # =============================================================================
-_, hero_col, _ = st.columns([1, 5, 1])
-with hero_col:
-    st.markdown(
-        f"""
-        <div class="app-hero">
-            <div class="app-hero-logo">
-                <img src="data:image/png;base64,{_logo_base64()}" alt="DataInsight logo"/>
-            </div>
-            <div class="app-hero-title">AI Data Analyst</div>
-            <p class="app-hero-subtitle">Generate SQL queries and actionable insights from plain English</p>
-            <span class="app-hero-badge">Powered by DataInsight</span>
+st.markdown(
+    f"""
+    <div class="app-hero">
+        <div class="app-hero-logo">
+            <img src="data:image/png;base64,{_logo_base64()}" alt="DataInsight logo"/>
         </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-st.markdown(f"<div class='divider'></div>", unsafe_allow_html=True)
+        <div class="app-hero-title">AI Data Analyst</div>
+        <p class="app-hero-subtitle">Transform raw data into SQL queries, visualizations, and actionable business insights — all from plain English questions.</p>
+        <span class="app-hero-badge">Powered by DataInsight</span>
+        <div class="app-hero-divider" role="presentation"></div>
+        <div class="workflow-steps">
+            <div class="workflow-step">
+                <span class="workflow-step-num">1</span>
+                <span class="workflow-step-text">Upload Data</span>
+            </div>
+            <div class="workflow-connector" role="presentation"></div>
+            <div class="workflow-step">
+                <span class="workflow-step-num">2</span>
+                <span class="workflow-step-text">Ask a Question</span>
+            </div>
+            <div class="workflow-connector" role="presentation"></div>
+            <div class="workflow-step">
+                <span class="workflow-step-num">3</span>
+                <span class="workflow-step-text">Get Insights</span>
+            </div>
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
 # =============================================================================
 # Upload CSV Section
 # =============================================================================
+render_section_header(
+    "📤",
+    "Upload Your Data",
+    "Import a CSV or Excel file to begin your analysis session",
+)
+
+st.markdown('<div class="content-panel content-panel-accent">', unsafe_allow_html=True)
 st.markdown(
-    f"<h2 class='section-header'>📤 Upload Your Data</h2>",
-    unsafe_allow_html=True
+    """
+    <div class="panel-header">
+        <div class="panel-header-text">
+            <p class="panel-eyebrow">Data Source</p>
+            <p class="panel-title">Select your dataset</p>
+            <p class="panel-desc">Supported formats: CSV, XLSX, XLS — up to standard file sizes</p>
+        </div>
+        <span class="panel-badge">Step 1 of 3</span>
+    </div>
+    """,
+    unsafe_allow_html=True,
 )
 
 uploaded_file = st.file_uploader(
@@ -1111,6 +1747,7 @@ uploaded_file = st.file_uploader(
     type=["csv", "xlsx", "xls"],
     help="Select a CSV or Excel (.xlsx / .xls) file to analyze with AI"
 )
+st.markdown('</div>', unsafe_allow_html=True)
 
 if uploaded_file is not None:
     # Basic validations
@@ -1242,32 +1879,70 @@ if uploaded_file is not None:
     st.success("✅ Dataset uploaded successfully! Ready to analyze.", icon="✅")
 
     # Preview Section
-    st.markdown(
-        f"<h2 class='section-header'>👁️ Data Preview</h2>",
-        unsafe_allow_html=True
+    render_section_header(
+        "👁️",
+        "Data Preview",
+        "Review your dataset structure and sample records before querying",
     )
-    
-    col1, col2 = st.columns([2, 1])
+
+    col1, col2 = st.columns([2.2, 1], gap="large")
     with col1:
+        st.markdown(
+            """
+            <div class="content-panel content-panel-compact" style="margin-bottom:0;">
+                <div class="panel-header" style="margin-bottom:0.75rem;padding-bottom:0.75rem;">
+                    <div class="panel-header-text">
+                        <p class="panel-eyebrow">Preview</p>
+                        <p class="panel-title">First 10 rows</p>
+                    </div>
+                    <span class="panel-badge">Sample</span>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
         st.dataframe(
             df.head(10),
             hide_index=True,
             use_container_width=True
         )
     with col2:
+        column_items = "".join(
+            f"<li><span class='column-dot'></span>{col}</li>"
+            for col in df.columns
+        )
         st.markdown(
-            f"<div class='card'><strong>Column Names</strong><br>"
-            f"{'<br>'.join([f'🔹 {col}' for col in df.columns])}"
-            f"</div>",
+            f"""
+            <div class="card" style="height:100%;">
+                <strong>Schema · {len(df.columns)} columns</strong>
+                <ul class="column-list">{column_items}</ul>
+            </div>
+            """,
             unsafe_allow_html=True
         )
 
     # Question Input Section
-    st.markdown(
-        f"<h2 class='section-header'>❓ Ask a Question</h2>",
-        unsafe_allow_html=True
+    render_section_header(
+        "❓",
+        "Ask a Question",
+        "Describe what you want to know — AI will generate and run the SQL for you",
     )
-    
+
+    st.markdown('<div class="content-panel content-panel-accent">', unsafe_allow_html=True)
+    st.markdown(
+        """
+        <div class="panel-header">
+            <div class="panel-header-text">
+                <p class="panel-eyebrow">Natural Language Query</p>
+                <p class="panel-title">What would you like to analyze?</p>
+                <p class="panel-desc">Be specific for best results — mention columns, filters, aggregations, or limits.</p>
+            </div>
+            <span class="panel-badge">Step 2 of 3</span>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
     user_input = st.text_area(
         "What would you like to know about your data?",
         placeholder="Example: Show top 5 customers by sales\nExample: Calculate average salary by department\nExample: Find total revenue this year",
@@ -1281,8 +1956,10 @@ if uploaded_file is not None:
         index=0,
         help="Auto chooses the best chart for the result, or select the type you want explicitly."
     )
+    st.markdown('</div>', unsafe_allow_html=True)
 
     # Generate Button with formatting
+    st.markdown('<div class="action-bar">', unsafe_allow_html=True)
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         if st.button("🚀 Generate Insights", use_container_width=True, key="generate_btn"):
@@ -1335,12 +2012,24 @@ User Question:
                         st.stop()
 
                     # Display SQL Code
+                    render_section_header(
+                        "💾",
+                        "Generated SQL",
+                        "AI-generated query executed against your uploaded dataset",
+                    )
                     st.markdown(
-                        f"<h2 class='section-header'>💾 Generated SQL</h2>",
+                        """
+                        <div class="sql-panel">
+                            <div class="sql-panel-header">
+                                <p class="sql-panel-title">SQL Query</p>
+                                <span class="panel-badge" style="background:rgba(255,193,7,0.15);border-color:rgba(255,193,7,0.3);">SELECT only</span>
+                            </div>
+                        """,
                         unsafe_allow_html=True
                     )
 
                     st.code(sql_query, language="sql")
+                    st.markdown("</div>", unsafe_allow_html=True)
 
                     # Execute Query
                     conn = sqlite3.connect("database.db")
@@ -1350,31 +2039,69 @@ User Question:
                     conn.close()
 
                     # Display Results
-                    st.markdown(
-                        f"<h2 class='section-header'>📋 Results</h2>",
-                        unsafe_allow_html=True
+                    render_section_header(
+                        "📋",
+                        "Results",
+                        "Query output returned from your dataset",
                     )
 
                     if result.empty:
                         st.info("ℹ️ The query returned no results. Try modifying your question.", icon="ℹ️")
                     else:
+                        st.markdown(
+                            f"""
+                            <div class="results-summary-bar">
+                                <div class="results-summary-item">📊 <strong>{len(result):,}</strong> rows returned</div>
+                                <div class="results-summary-item">📑 <strong>{len(result.columns)}</strong> columns</div>
+                                <div class="results-summary-item">✅ Query executed successfully</div>
+                            </div>
+                            """,
+                            unsafe_allow_html=True,
+                        )
+
+                        st.markdown('<div class="content-panel content-panel-compact" style="padding:1rem 1.25rem;">', unsafe_allow_html=True)
                         st.dataframe(
                             result,
                             hide_index=True,
                             use_container_width=True
                         )
+                        st.markdown('</div>', unsafe_allow_html=True)
 
                         generate_kpis(result)
 
-                        col1, col2, col3 = st.columns(3)
+                        st.markdown(
+                            """
+                            <div class="panel-header" style="margin-top:1.5rem;margin-bottom:1rem;">
+                                <div class="panel-header-text">
+                                    <p class="panel-eyebrow">Export</p>
+                                    <p class="panel-title">Download your results</p>
+                                </div>
+                            </div>
+                            """,
+                            unsafe_allow_html=True,
+                        )
+
+                        col1, col2, col3 = st.columns(3, gap="medium")
                         with col1:
                             st.markdown(
-                                f"<div class='metric-card'><div class='metric-label'>Rows</div><div class='metric-value'>{len(result)}</div></div>",
+                                f"""
+                                <div class="dash-stat-card">
+                                    <div class="dash-stat-icon">📊</div>
+                                    <p class="dash-stat-label">Rows</p>
+                                    <p class="dash-stat-value">{len(result):,}</p>
+                                </div>
+                                """,
                                 unsafe_allow_html=True
                             )
                         with col2:
                             st.markdown(
-                                f"<div class='metric-card'><div class='metric-label'>Columns</div><div class='metric-value'>{len(result.columns)}</div></div>",
+                                f"""
+                                <div class="dash-stat-card">
+                                    <div class="dash-stat-icon">📑</div>
+                                    <p class="dash-stat-label">Columns</p>
+                                    <p class="dash-stat-value">{len(result.columns)}</p>
+                                </div>
+                                """,
                                 unsafe_allow_html=True
                             )
                         with col3:
@@ -1388,7 +2115,6 @@ User Question:
                             )
 
                         # PDF Report Button (add a new row for PDF)
-                        st.markdown("<div style='height: 0.5rem;'></div>", unsafe_allow_html=True)
                         col_pdf1, col_pdf2, col_pdf3 = st.columns(3)
                         
                         with col_pdf2:
@@ -1414,9 +2140,10 @@ User Question:
                                 st.warning(f"⚠️ PDF generation unavailable: {str(e)[:100]}", icon="⚠️")
 
                         # Visualization
-                        st.markdown(
-                            f"<h2 class='section-header'>📊 Visualization</h2>",
-                            unsafe_allow_html=True
+                        render_section_header(
+                            "📊",
+                            "Visualization",
+                            "Interactive chart generated from your query results",
                         )
 
                         try:
@@ -1430,8 +2157,14 @@ User Question:
                                     fig, rendered_type = build_plotly_figure(chart_data, chart_type, primary_yellow, primary_black)
                                     st.session_state.last_chart_fig = fig
                                     st.markdown(
-                                        f"<p style='color: #444; font-size: 0.95rem; margin-bottom: 1rem;'>" \
-                                        f"Showing <strong>{rendered_type}</strong> for your query result.</p>",
+                                        f"""
+                                        <div class="chart-container">
+                                            <div class="chart-meta">
+                                                <span class="chart-meta-label">Chart type</span>
+                                                <span class="chart-type-badge">{rendered_type}</span>
+                                            </div>
+                                        </div>
+                                        """,
                                         unsafe_allow_html=True
                                     )
                                     st.plotly_chart(fig, use_container_width=True)
@@ -1444,8 +2177,21 @@ User Question:
                             st.error(f"📊 Visualization Error: {str(e)}", icon="❌")
 
                         # AI Insights
+                        render_section_header(
+                            "🧠",
+                            "AI Insights",
+                            "AI-powered analysis and recommendations based on your results",
+                        )
                         st.markdown(
-                            f"<h2 class='section-header'>🧠 AI Insights</h2>",
+                            """
+                            <div class="panel-header" style="margin-bottom:0.75rem;">
+                                <div class="panel-header-text">
+                                    <p class="panel-eyebrow">Analysis</p>
+                                    <p class="panel-title">Business insights</p>
+                                </div>
+                                <span class="panel-badge">Step 3 of 3</span>
+                            </div>
+                            """,
                             unsafe_allow_html=True
                         )
 
@@ -1462,7 +2208,7 @@ Format your response as a numbered list with clear, practical insights."""
 
                             st.session_state.last_insights = insight_response.text
                             st.markdown(
-                                f"<div class='card'>{insight_response.text.replace(chr(10), '<br>')}</div>",
+                                f"<div class='insights-panel'>{insight_response.text.replace(chr(10), '<br>')}</div>",
                                 unsafe_allow_html=True
                             )
                         except Exception as e:
@@ -1489,7 +2235,7 @@ Format your response as a numbered list with clear, practical insights."""
                             st.session_state.last_insights = basic_insights
 
                             st.markdown(
-                                "<div class='card'>",
+                                "<div class='insights-panel'>",
                                 unsafe_allow_html=True
                             )
 
@@ -1524,24 +2270,37 @@ Format your response as a numbered list with clear, practical insights."""
                 except Exception as e:
                     st.error(f"❌ {format_api_error(e)}", icon="❌")
 
+    st.markdown('<p class="action-bar-note">Results include SQL, data table, KPIs, charts, and AI insights</p>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+
 else:
     # Empty State
-    col1, col2, col3 = st.columns([1, 2, 1])
+    col1, col2, col3 = st.columns([0.75, 2.5, 0.75])
     with col2:
         st.markdown(
-            f"<div style='text-align: center; padding: 4rem 2rem;'>"
-            f"<div style='font-size: 4rem; margin-bottom: 1rem;'>📁</div>"
-            f"<h2 style='color: {primary_black}; font-size: 1.8rem; font-weight: 700; margin-bottom: 0.5rem;'>"
-            f"Get Started</h2>"
-            f"<p style='color: #666; font-size: 1rem; line-height: 1.6; margin-bottom: 2rem;'>"
-            f"Upload a CSV or Excel file to begin your data analysis journey with AI-powered SQL generation.</p>"
-            f"<div style='background: linear-gradient(135deg, {primary_yellow}15 0%, transparent 100%); "
-            f"border: 2px dashed {primary_yellow}; border-radius: 12px; padding: 2rem; "
-            f"color: #666; font-size: 0.95rem;'>"
-            f"👆 Use the upload area above to select your CSV or Excel file<br><br>"
-            f"✨ Supported formats: CSV (.csv), Excel (.xlsx, .xls)<br><br>"
-            f"🚀 Ask questions in plain English and get instant SQL queries"
-            f"</div>"
-            f"</div>",
+            f"""
+            <div class="empty-state">
+                <div class="empty-state-icon">📁</div>
+                <h2 class="empty-state-title">Get Started</h2>
+                <p class="empty-state-desc">
+                    Upload a CSV or Excel file to begin your data analysis journey.
+                    Ask questions in plain English and receive instant SQL, charts, and insights.
+                </p>
+                <div class="empty-state-tips">
+                    <div class="empty-state-tip">
+                        <strong>Upload</strong>
+                        Use the upload panel above to select your CSV or Excel file.
+                    </div>
+                    <div class="empty-state-tip">
+                        <strong>Supported</strong>
+                        CSV (.csv), Excel (.xlsx, .xls) with automatic sheet detection.
+                    </div>
+                    <div class="empty-state-tip">
+                        <strong>Analyze</strong>
+                        Ask natural language questions and get SQL, KPIs, and visualizations.
+                    </div>
+                </div>
+            </div>
+            """,
             unsafe_allow_html=True
         )
