@@ -1,4 +1,5 @@
 import streamlit as st
+from streamlit.errors import StreamlitSecretNotFoundError
 import google.generativeai as genai
 from dotenv import load_dotenv
 import base64
@@ -55,6 +56,26 @@ def render_section_header(icon: str, title: str, subtitle: str, *, compact: bool
     )
 
 
+def render_footer() -> None:
+    """Render the site-wide page footer."""
+    year = datetime.now().year
+    st.markdown(
+        f"""
+        <footer class="app-footer">
+            <div class="app-footer-inner">
+                <div class="app-footer-brand">
+                    <img src="data:image/png;base64,{_logo_base64()}" alt="DataInsight logo" class="app-footer-logo"/>
+                    <span class="app-footer-name">DataInsight</span>
+                </div>
+                <p class="app-footer-copy">&copy; {year} DataInsight</p>
+                <p class="app-footer-meta">Powered by Google Gemini</p>
+            </div>
+        </footer>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 # =============================================================================
 # Page Config (MUST BE FIRST)
 # =============================================================================
@@ -95,6 +116,10 @@ custom_css = f"""
         --radius-sm: 10px;
         --radius-md: 14px;
         --radius-lg: 18px;
+        --main-content-width: 92%;
+        --main-content-padding-x: 1.25rem;
+        --body-card-gap: 1.25rem;
+        --body-card-gap-lg: 1.75rem;
     }}
 
     /* Main Background */
@@ -102,7 +127,7 @@ custom_css = f"""
         background-color: #ECEEF2;
     }}
 
-    footer {{
+    footer[data-testid="stFooter"] {{
         visibility: hidden;
         height: 0;
     }}
@@ -225,6 +250,12 @@ custom_css = f"""
     }}
 
     /* Metric Boxes (sidebar dataset info) */
+    .metric-cards-stack {{
+        display: flex;
+        flex-direction: column;
+        gap: 0.65rem;
+    }}
+
     .metric-card {{
         background: linear-gradient(135deg, {primary_yellow}15 0%, transparent 100%);
         border: 2px solid {primary_yellow};
@@ -257,15 +288,79 @@ custom_css = f"""
     }}
 
     section.main .block-container, [data-testid="stMain"] .block-container {{
-        max-width: 1120px;
+        max-width: var(--main-content-width) !important;
+        width: var(--main-content-width) !important;
         padding-top: 2.5rem;
-        padding-bottom: 4rem;
+        padding-bottom: 0;
+        padding-left: var(--main-content-padding-x);
+        padding-right: var(--main-content-padding-x);
+    }}
+
+    section.main [data-testid="stVerticalBlock"],
+    [data-testid="stMain"] [data-testid="stVerticalBlock"] {{
+        max-width: 100%;
+    }}
+
+    section.main .block-container > div > [data-testid="stVerticalBlock"]:not(:has(.app-footer)),
+    [data-testid="stMain"] .block-container > div > [data-testid="stVerticalBlock"]:not(:has(.app-footer)) {{
+        gap: var(--body-card-gap) !important;
+    }}
+
+    section.main [data-testid="column"] [data-testid="stVerticalBlock"],
+    [data-testid="stMain"] [data-testid="column"] [data-testid="stVerticalBlock"] {{
+        gap: 1rem !important;
+    }}
+
+    section.main [data-testid="stHorizontalBlock"],
+    [data-testid="stMain"] [data-testid="stHorizontalBlock"] {{
+        max-width: 100%;
+        width: 100%;
+    }}
+
+    section.main [data-testid="stHorizontalBlock"]:has(.dash-stat-card),
+    section.main [data-testid="stHorizontalBlock"]:has(div[data-testid="stMetric"]),
+    [data-testid="stMain"] [data-testid="stHorizontalBlock"]:has(.dash-stat-card),
+    [data-testid="stMain"] [data-testid="stHorizontalBlock"]:has(div[data-testid="stMetric"]) {{
+        gap: 1rem !important;
+        margin-bottom: var(--body-card-gap) !important;
+    }}
+
+    section.main .content-panel,
+    section.main .sql-panel,
+    section.main .insights-panel,
+    section.main .chart-container,
+    section.main .results-summary-bar,
+    section.main .dash-stat-card,
+    [data-testid="stMain"] .content-panel,
+    [data-testid="stMain"] .sql-panel,
+    [data-testid="stMain"] .insights-panel,
+    [data-testid="stMain"] .chart-container,
+    [data-testid="stMain"] .results-summary-bar,
+    [data-testid="stMain"] .dash-stat-card {{
+        width: 100%;
+        box-sizing: border-box;
+    }}
+
+    section.main .insights-panel,
+    [data-testid="stMain"] .insights-panel {{
+        max-width: 100%;
+    }}
+
+    section.main [data-testid="stPlotlyChart"],
+    section.main [data-testid="stDataFrame"],
+    section.main .stCode,
+    [data-testid="stMain"] [data-testid="stPlotlyChart"],
+    [data-testid="stMain"] [data-testid="stDataFrame"],
+    [data-testid="stMain"] .stCode {{
+        width: 100% !important;
+        max-width: 100% !important;
     }}
 
     div[data-testid="stMarkdown"]:has(.app-hero) {{
         width: 100%;
         display: flex;
         justify-content: center;
+        margin-top: 1.5rem;
     }}
 
     section.main h1, section.main h2, section.main h3,
@@ -279,7 +374,7 @@ custom_css = f"""
         border: 1px solid rgba(18, 18, 18, 0.07);
         border-radius: var(--radius-lg);
         padding: 1.75rem 2rem;
-        margin: 0 0 1.5rem 0;
+        margin: 0;
         box-shadow: var(--shadow-sm), var(--shadow-md);
         transition: box-shadow 0.28s ease, border-color 0.28s ease, transform 0.28s ease;
         position: relative;
@@ -310,6 +405,14 @@ custom_css = f"""
     .content-panel-accent {{
         border-top: 3px solid {primary_yellow};
         background: linear-gradient(180deg, {accent_cream} 0%, {primary_white} 28%, #FDFDFB 100%);
+        margin-top: var(--body-card-gap-lg);
+    }}
+
+    section.main div[data-testid="stMarkdown"]:has(.content-panel-accent),
+    section.main div[data-testid="stElementContainer"]:has(.content-panel-accent),
+    [data-testid="stMain"] div[data-testid="stMarkdown"]:has(.content-panel-accent),
+    [data-testid="stMain"] div[data-testid="stElementContainer"]:has(.content-panel-accent) {{
+        margin-bottom: var(--body-card-gap-lg) !important;
     }}
 
     .content-panel-accent::after {{
@@ -393,7 +496,8 @@ custom_css = f"""
 
     /* Section Headers */
     .section-block {{
-        margin: 2.75rem 0 1.25rem 0;
+        margin: 2.75rem 0 0 0;
+        padding-bottom: 0.25rem;
         position: relative;
     }}
 
@@ -547,7 +651,7 @@ custom_css = f"""
         border-top: 3px solid {primary_yellow} !important;
         box-shadow: var(--shadow-sm), var(--shadow-md) !important;
         padding: 1.2rem 1.35rem !important;
-        margin-bottom: 0.75rem !important;
+        margin-bottom: 0 !important;
         min-height: 112px;
         transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease !important;
         position: relative;
@@ -692,6 +796,32 @@ custom_css = f"""
         border-radius: 2px;
     }}
 
+    @media (max-width: 1024px) {{
+        :root {{
+            --main-content-width: 94%;
+            --main-content-padding-x: 1rem;
+        }}
+    }}
+
+    @media (max-width: 768px) {{
+        :root {{
+            --main-content-width: 100%;
+            --main-content-padding-x: 0.75rem;
+        }}
+
+        .content-panel {{
+            padding: 1.25rem 1.25rem;
+        }}
+
+        .insights-panel {{
+            padding: 1.35rem 1.5rem;
+        }}
+
+        .chart-container {{
+            padding: 1rem 1.1rem 0.65rem;
+        }}
+    }}
+
     @media (max-width: 680px) {{
         .workflow-steps {{
             flex-wrap: wrap;
@@ -700,6 +830,20 @@ custom_css = f"""
 
         .workflow-connector {{
             display: none;
+        }}
+    }}
+
+    @media (max-width: 480px) {{
+        :root {{
+            --main-content-padding-x: 0.5rem;
+        }}
+
+        .content-panel {{
+            padding: 1rem;
+        }}
+
+        .dash-stat-card {{
+            padding: 1rem 1.1rem;
         }}
     }}
 
@@ -748,7 +892,7 @@ custom_css = f"""
         padding: 0;
         overflow: hidden;
         border: 1px solid rgba(255, 193, 7, 0.2);
-        margin-bottom: 0.5rem;
+        margin-bottom: 0.75rem;
     }}
 
     .sql-panel-header {{
@@ -776,6 +920,7 @@ custom_css = f"""
         border-left: 4px solid {primary_yellow};
         border-radius: var(--radius-md);
         padding: 1.85rem 2.1rem;
+        margin: 0;
         line-height: 1.75;
         color: #333;
         font-size: 0.95rem;
@@ -805,7 +950,7 @@ custom_css = f"""
         border-radius: var(--radius-md);
         padding: 1.35rem 1.6rem 0.75rem;
         box-shadow: var(--shadow-sm), var(--shadow-md);
-        margin-bottom: 0.5rem;
+        margin-bottom: 0;
         position: relative;
         overflow: hidden;
     }}
@@ -869,7 +1014,7 @@ custom_css = f"""
         background: linear-gradient(90deg, {accent_cream} 0%, {primary_white} 50%, #FAFAFA 100%);
         border: 1px solid rgba(255, 193, 7, 0.22);
         border-radius: var(--radius-sm);
-        margin-bottom: 1.25rem;
+        margin-bottom: 0;
         box-shadow: var(--shadow-sm);
     }}
 
@@ -890,6 +1035,7 @@ custom_css = f"""
     .empty-state {{
         text-align: center;
         padding: 3.5rem 2rem;
+        margin: var(--body-card-gap-lg) 0 var(--body-card-gap) 0;
         background: linear-gradient(180deg, {primary_white} 0%, #FDFDFB 60%, {accent_cream} 100%);
         border: 1px solid rgba(18, 18, 18, 0.07);
         border-radius: var(--radius-lg);
@@ -1121,8 +1267,8 @@ custom_css = f"""
         text-align: center !important;
         padding: 2.75rem 2.25rem 2.25rem;
         width: 100%;
-        max-width: 740px;
-        margin: 1.25rem auto 0.5rem;
+        max-width: 100%;
+        margin: 0.75rem auto var(--body-card-gap);
         background: linear-gradient(165deg, {primary_white} 0%, #FDFDFB 45%, {accent_cream} 100%);
         border: 1px solid rgba(18, 18, 18, 0.07);
         border-radius: 22px;
@@ -1303,6 +1449,12 @@ custom_css = f"""
         border-color: {primary_yellow} !important;
     }}
 
+    .query-form-spacer {{
+        display: block;
+        height: var(--body-card-gap);
+        flex-shrink: 0;
+    }}
+
     section.main [data-testid="stExpander"],
     [data-testid="stMain"] [data-testid="stExpander"] {{
         border: 1px solid rgba(18, 18, 18, 0.07) !important;
@@ -1335,6 +1487,78 @@ custom_css = f"""
         border-radius: var(--radius-sm) !important;
         box-shadow: var(--shadow-sm) !important;
     }}
+
+    /* Site footer — full-width, flush to viewport bottom */
+    div[data-testid="stMarkdown"]:has(.app-footer) {{
+        width: 100vw;
+        max-width: 100vw;
+        margin-left: calc(50% - 50vw);
+        margin-right: calc(50% - 50vw);
+        margin-bottom: 0 !important;
+        padding-bottom: 0 !important;
+    }}
+
+    [data-testid="stVerticalBlock"]:has(.app-footer),
+    [data-testid="stVerticalBlockBorderWrapper"]:has(.app-footer) {{
+        margin-bottom: 0 !important;
+        padding-bottom: 0 !important;
+        gap: 0 !important;
+    }}
+
+    .app-footer {{
+        margin: 2.5rem 0 0;
+        padding: 0;
+        width: 100%;
+        background: {primary_black};
+        border-top: 2px solid {primary_yellow};
+        box-sizing: border-box;
+    }}
+
+    .app-footer-inner {{
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        flex-wrap: wrap;
+        max-width: 1120px;
+        margin: 0 auto;
+        padding: 0.65rem 1.5rem;
+    }}
+
+    .app-footer-brand {{
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }}
+
+    .app-footer-logo {{
+        width: 22px;
+        height: 22px;
+        object-fit: contain;
+    }}
+
+    .app-footer-name {{
+        color: {primary_white};
+        font-size: 0.85rem;
+        font-weight: 700;
+        letter-spacing: 0.01em;
+    }}
+
+    .app-footer-copy,
+    .app-footer-meta {{
+        color: #757575;
+        font-size: 0.72rem;
+        margin: 0;
+    }}
+
+    @media (max-width: 540px) {{
+        .app-footer-inner {{
+            flex-direction: column;
+            align-items: flex-start;
+            padding: 0.65rem 1.25rem;
+            gap: 0.35rem;
+        }}
+    }}
 </style>
 """
 
@@ -1351,9 +1575,27 @@ st.logo(
 # =============================================================================
 load_dotenv()
 
-genai.configure(
-    api_key=os.getenv("GEMINI_API_KEY").strip()
-)
+
+def _get_gemini_api_key() -> str:
+    """Resolve Gemini API key from Streamlit secrets or environment."""
+    try:
+        if st.secrets.has_key("GEMINI_API_KEY"):
+            return str(st.secrets["GEMINI_API_KEY"]).strip()
+    except StreamlitSecretNotFoundError:
+        pass
+
+    key = os.getenv("GEMINI_API_KEY", "").strip()
+    if key:
+        return key
+
+    st.error(
+        "Gemini API key not found. Add `GEMINI_API_KEY` to "
+        "`.streamlit/secrets.toml` or a `.env` file in the project root."
+    )
+    st.stop()
+
+
+genai.configure(api_key=_get_gemini_api_key())
 
 model = genai.GenerativeModel("gemini-2.5-flash")
 
@@ -1643,7 +1885,7 @@ def create_pdf_title_page(story, primary_yellow: str, primary_black: str):
         logo_img.hAlign = "CENTER"
         story.append(logo_img)
         story.append(Spacer(1, 0.35 * inch))
-    story.append(Paragraph("AI Data Analyst", title_style))
+    story.append(Paragraph("AI Data Analyst Assistant", title_style))
     story.append(Paragraph("Professional Report", title_style))
     story.append(Spacer(1, 0.5 * inch))
     
@@ -2245,16 +2487,23 @@ if uploaded_file is not None:
     # Dataset Summary
     with dataset_placeholder.container():
         st.markdown(
-            f"<div class='metric-card'><div class='metric-label'>Total Rows</div><div class='metric-value'>{df.shape[0]:,}</div></div>",
-            unsafe_allow_html=True
-        )
-        st.markdown(
-            f"<div class='metric-card'><div class='metric-label'>Columns</div><div class='metric-value'>{df.shape[1]}</div></div>",
-            unsafe_allow_html=True
-        )
-        st.markdown(
-            f"<div class='metric-card'><div class='metric-label'>Data Size</div><div class='metric-value'>{file_size_kb:.1f} KB</div></div>",
-            unsafe_allow_html=True
+            f"""
+            <div class="metric-cards-stack">
+                <div class="metric-card">
+                    <div class="metric-label">Total Rows</div>
+                    <div class="metric-value">{df.shape[0]:,}</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Columns</div>
+                    <div class="metric-value">{df.shape[1]}</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Data Size</div>
+                    <div class="metric-value">{file_size_kb:.1f} KB</div>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
 
     # Save to SQLite (preserve existing behavior)
@@ -2353,8 +2602,10 @@ if uploaded_file is not None:
         help="Auto chooses the best chart for the result, or select the type you want explicitly."
     )
 
+    st.markdown('<div class="query-form-spacer" aria-hidden="true"></div>', unsafe_allow_html=True)
+
     # Generate Button with formatting
-    col1, col2, col3 = st.columns([1, 2, 1])
+    col1, col2, col3 = st.columns([0.5, 3, 0.5])
     with col2:
         if st.button("🚀 Generate Insights", use_container_width=True, key="generate_btn"):
 
@@ -2666,32 +2917,32 @@ Format your response as a numbered list with clear, practical insights."""
 
 else:
     # Empty State
-    col1, col2, col3 = st.columns([0.75, 2.5, 0.75])
-    with col2:
-        st.markdown(
-            f"""
-            <div class="empty-state">
-                <div class="empty-state-icon">📁</div>
-                <h2 class="empty-state-title">Get Started</h2>
-                <p class="empty-state-desc">
-                    Upload a CSV or Excel file to begin your data analysis journey.
-                    Ask questions in plain English and receive instant SQL, charts, and insights.
-                </p>
-                <div class="empty-state-tips">
-                    <div class="empty-state-tip">
-                        <strong>Upload</strong>
-                        Use the upload panel above to select your CSV or Excel file.
-                    </div>
-                    <div class="empty-state-tip">
-                        <strong>Supported</strong>
-                        CSV (.csv), Excel (.xlsx, .xls) with automatic sheet detection.
-                    </div>
-                    <div class="empty-state-tip">
-                        <strong>Analyze</strong>
-                        Ask natural language questions and get SQL, KPIs, and visualizations.
-                    </div>
+    st.markdown(
+        f"""
+        <div class="empty-state">
+            <div class="empty-state-icon">📁</div>
+            <h2 class="empty-state-title">Get Started</h2>
+            <p class="empty-state-desc">
+                Upload a CSV or Excel file to begin your data analysis journey.
+                Ask questions in plain English and receive instant SQL, charts, and insights.
+            </p>
+            <div class="empty-state-tips">
+                <div class="empty-state-tip">
+                    <strong>Upload</strong>
+                    Use the upload panel above to select your CSV or Excel file.
+                </div>
+                <div class="empty-state-tip">
+                    <strong>Supported</strong>
+                    CSV (.csv), Excel (.xlsx, .xls) with automatic sheet detection.
+                </div>
+                <div class="empty-state-tip">
+                    <strong>Analyze</strong>
+                    Ask natural language questions and get SQL, KPIs, and visualizations.
                 </div>
             </div>
-            """,
-            unsafe_allow_html=True
-        )
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+render_footer()
