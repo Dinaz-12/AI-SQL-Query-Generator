@@ -73,20 +73,33 @@ primary_black = "#121212"
 primary_white = "#FFFFFF"
 light_gray = "#F5F5F5"
 border_color = "#E0E0E0"
+accent_cream = "#FFFBF0"
+accent_warm = "#FFF8E1"
 
 custom_css = f"""
 <style>
     /* Primary Colors */
     :root {{
         --primary-yellow: {primary_yellow};
+        --primary-yellow-light: #FFD54F;
+        --primary-yellow-dark: #FFB300;
         --primary-black: {primary_black};
         --primary-white: {primary_white};
         --light-gray: {light_gray};
+        --accent-cream: {accent_cream};
+        --accent-warm: {accent_warm};
+        --shadow-sm: 0 1px 3px rgba(18, 18, 18, 0.05);
+        --shadow-md: 0 4px 20px rgba(18, 18, 18, 0.07);
+        --shadow-lg: 0 12px 40px rgba(18, 18, 18, 0.1);
+        --shadow-yellow: 0 6px 28px rgba(255, 193, 7, 0.16);
+        --radius-sm: 10px;
+        --radius-md: 14px;
+        --radius-lg: 18px;
     }}
 
     /* Main Background */
     .stApp {{
-        background-color: #F0F2F5;
+        background-color: #ECEEF2;
     }}
 
     footer {{
@@ -167,6 +180,27 @@ custom_css = f"""
     }}
 
     /* Containers & Cards (sidebar metric-card unchanged) */
+    section.main .card,
+    [data-testid="stMain"] .card {{
+        background: linear-gradient(180deg, {primary_white} 0%, #FDFDFB 100%);
+        border: 1px solid rgba(18, 18, 18, 0.07);
+        border-left: 4px solid {primary_yellow};
+        padding: 1.5rem 1.75rem;
+        border-radius: var(--radius-md);
+        margin: 0;
+        box-shadow: var(--shadow-sm), var(--shadow-md);
+        line-height: 1.65;
+        font-size: 0.95rem;
+        color: #444;
+        transition: box-shadow 0.25s ease, border-color 0.25s ease;
+    }}
+
+    section.main .card:hover,
+    [data-testid="stMain"] .card:hover {{
+        border-left-color: #FFB300;
+        box-shadow: var(--shadow-yellow), var(--shadow-sm);
+    }}
+
     .card {{
         background-color: {primary_white};
         border: 1px solid {border_color};
@@ -216,12 +250,15 @@ custom_css = f"""
 
     /* ── Main content area only ── */
     section.main, [data-testid="stMain"] {{
-        background: #F0F2F5;
+        background:
+            radial-gradient(ellipse 80% 50% at 50% -10%, rgba(255, 193, 7, 0.09) 0%, transparent 55%),
+            radial-gradient(ellipse 60% 40% at 100% 50%, rgba(18, 18, 18, 0.03) 0%, transparent 50%),
+            linear-gradient(165deg, #E8EBF0 0%, #F0F2F5 45%, #F4F2EC 100%);
     }}
 
     section.main .block-container, [data-testid="stMain"] .block-container {{
-        max-width: 1080px;
-        padding-top: 2rem;
+        max-width: 1120px;
+        padding-top: 2.5rem;
         padding-bottom: 4rem;
     }}
 
@@ -238,12 +275,32 @@ custom_css = f"""
 
     /* Content panels */
     .content-panel {{
-        background: {primary_white};
-        border: 1px solid {border_color};
-        border-radius: 16px;
+        background: linear-gradient(180deg, {primary_white} 0%, #FDFDFB 100%);
+        border: 1px solid rgba(18, 18, 18, 0.07);
+        border-radius: var(--radius-lg);
         padding: 1.75rem 2rem;
         margin: 0 0 1.5rem 0;
-        box-shadow: 0 1px 2px rgba(18, 18, 18, 0.04), 0 12px 32px rgba(18, 18, 18, 0.05);
+        box-shadow: var(--shadow-sm), var(--shadow-md);
+        transition: box-shadow 0.28s ease, border-color 0.28s ease, transform 0.28s ease;
+        position: relative;
+        overflow: hidden;
+    }}
+
+    .content-panel::before {{
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 120px;
+        height: 120px;
+        background: radial-gradient(circle, rgba(255, 193, 7, 0.06) 0%, transparent 70%);
+        pointer-events: none;
+    }}
+
+    section.main .content-panel:hover,
+    [data-testid="stMain"] .content-panel:hover {{
+        border-color: rgba(255, 193, 7, 0.28);
+        box-shadow: var(--shadow-sm), var(--shadow-lg);
     }}
 
     .content-panel-compact {{
@@ -252,6 +309,26 @@ custom_css = f"""
 
     .content-panel-accent {{
         border-top: 3px solid {primary_yellow};
+        background: linear-gradient(180deg, {accent_cream} 0%, {primary_white} 28%, #FDFDFB 100%);
+    }}
+
+    .content-panel-accent::after {{
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, {primary_yellow}, {primary_black} 50%, {primary_yellow});
+        opacity: 0.85;
+    }}
+
+    .content-panel:empty {{
+        display: none;
+        padding: 0;
+        margin: 0;
+        border: none;
+        box-shadow: none;
     }}
 
     .panel-header {{
@@ -261,7 +338,13 @@ custom_css = f"""
         gap: 1rem;
         margin-bottom: 1.25rem;
         padding-bottom: 1rem;
-        border-bottom: 1px solid {border_color};
+        border-bottom: 1px solid rgba(18, 18, 18, 0.06);
+        background: linear-gradient(90deg, rgba(255, 193, 7, 0.04) 0%, transparent 60%);
+        margin-left: -0.5rem;
+        margin-right: -0.5rem;
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+        border-radius: var(--radius-sm);
     }}
 
     .panel-header-text {{
@@ -295,24 +378,41 @@ custom_css = f"""
     .panel-badge {{
         display: inline-flex;
         align-items: center;
-        padding: 0.3rem 0.75rem;
-        background: rgba(255, 193, 7, 0.12);
+        padding: 0.35rem 0.85rem;
+        background: linear-gradient(135deg, rgba(255, 193, 7, 0.18) 0%, rgba(255, 193, 7, 0.08) 100%);
         color: {primary_black};
-        border: 1px solid rgba(255, 193, 7, 0.35);
+        border: 1px solid rgba(255, 193, 7, 0.4);
         border-radius: 999px;
         font-size: 0.72rem;
-        font-weight: 600;
+        font-weight: 700;
         white-space: nowrap;
         flex-shrink: 0;
+        box-shadow: 0 2px 8px rgba(255, 193, 7, 0.12);
+        letter-spacing: 0.03em;
     }}
 
     /* Section Headers */
     .section-block {{
         margin: 2.75rem 0 1.25rem 0;
+        position: relative;
+    }}
+
+    .section-block::after {{
+        content: '';
+        display: block;
+        height: 2px;
+        margin-top: 0.85rem;
+        background: linear-gradient(90deg, {primary_yellow} 0%, rgba(255, 193, 7, 0.35) 35%, transparent 75%);
+        border-radius: 2px;
     }}
 
     .section-block-compact {{
         margin-top: 1.5rem;
+    }}
+
+    .section-block-compact::after {{
+        margin-top: 0.65rem;
+        max-width: 12rem;
     }}
 
     .section-header {{
@@ -320,21 +420,26 @@ custom_css = f"""
         align-items: flex-start;
         gap: 0.85rem;
         margin: 0;
-        padding: 0;
+        padding: 0.65rem 0.85rem;
+        background: linear-gradient(90deg, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0.35) 100%);
+        border: 1px solid rgba(18, 18, 18, 0.05);
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-sm);
     }}
 
     .section-header-icon {{
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        width: 2.5rem;
-        height: 2.5rem;
-        background: rgba(255, 193, 7, 0.14);
-        border: 1px solid rgba(255, 193, 7, 0.28);
-        border-radius: 10px;
-        font-size: 1.1rem;
+        width: 2.65rem;
+        height: 2.65rem;
+        background: linear-gradient(145deg, rgba(255, 193, 7, 0.22) 0%, rgba(255, 193, 7, 0.08) 100%);
+        border: 1px solid rgba(255, 193, 7, 0.35);
+        border-radius: 12px;
+        font-size: 1.15rem;
         flex-shrink: 0;
         line-height: 1;
+        box-shadow: 0 3px 10px rgba(255, 193, 7, 0.15);
     }}
 
     .section-header-text {{
@@ -364,19 +469,41 @@ custom_css = f"""
 
     /* Dashboard stat cards (main body only) */
     .dash-stat-card {{
-        background: {primary_white};
-        border: 1px solid {border_color};
-        border-radius: 14px;
-        padding: 1.15rem 1.25rem;
+        background: linear-gradient(160deg, {primary_white} 0%, #FEFDF9 55%, {accent_warm} 100%);
+        border: 1px solid rgba(18, 18, 18, 0.07);
+        border-radius: var(--radius-md);
+        padding: 1.25rem 1.35rem;
         text-align: left;
-        box-shadow: 0 2px 8px rgba(18, 18, 18, 0.04);
-        transition: box-shadow 0.2s ease, border-color 0.2s ease;
+        box-shadow: var(--shadow-sm), var(--shadow-md);
+        transition: box-shadow 0.25s ease, border-color 0.25s ease, transform 0.25s ease;
         height: 100%;
+        position: relative;
+        overflow: hidden;
+    }}
+
+    .dash-stat-card::before {{
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, {primary_yellow}, {primary_black});
+        opacity: 0.75;
     }}
 
     .dash-stat-card:hover {{
-        border-color: rgba(255, 193, 7, 0.45);
-        box-shadow: 0 4px 16px rgba(18, 18, 18, 0.08);
+        border-color: rgba(255, 193, 7, 0.5);
+        box-shadow: var(--shadow-yellow), var(--shadow-md);
+        transform: translateY(-3px);
+    }}
+
+    .dash-stat-card--rows::before {{
+        background: linear-gradient(90deg, {primary_yellow}, #FFD54F);
+    }}
+
+    .dash-stat-card--cols::before {{
+        background: linear-gradient(90deg, {primary_black}, #424242);
     }}
 
     .dash-stat-label {{
@@ -401,31 +528,65 @@ custom_css = f"""
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        width: 2rem;
-        height: 2rem;
-        background: rgba(255, 193, 7, 0.15);
-        border-radius: 8px;
-        font-size: 0.95rem;
-        margin-bottom: 0.65rem;
+        width: 2.25rem;
+        height: 2.25rem;
+        background: linear-gradient(135deg, rgba(255, 193, 7, 0.2) 0%, rgba(255, 193, 7, 0.08) 100%);
+        border: 1px solid rgba(255, 193, 7, 0.25);
+        border-radius: 9px;
+        font-size: 1rem;
+        margin-bottom: 0.7rem;
+        box-shadow: 0 2px 6px rgba(255, 193, 7, 0.12);
     }}
 
     /* KPI Cards (main content metrics) */
     section.main div[data-testid="stMetric"],
     [data-testid="stMain"] div[data-testid="stMetric"] {{
-        border-radius: 14px !important;
-        background: linear-gradient(145deg, {primary_white} 0%, #FEFDF8 100%) !important;
+        border-radius: var(--radius-md) !important;
+        background: linear-gradient(155deg, {primary_white} 0%, #FEFDF8 60%, {accent_warm} 100%) !important;
         border: 1px solid rgba(255, 193, 7, 0.22) !important;
-        box-shadow: 0 2px 8px rgba(18, 18, 18, 0.04), 0 8px 24px rgba(18, 18, 18, 0.04) !important;
-        padding: 1.1rem 1.25rem !important;
+        border-top: 3px solid {primary_yellow} !important;
+        box-shadow: var(--shadow-sm), var(--shadow-md) !important;
+        padding: 1.2rem 1.35rem !important;
         margin-bottom: 0.75rem !important;
-        min-height: 108px;
-        transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+        min-height: 112px;
+        transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease !important;
+        position: relative;
+        overflow: hidden;
+    }}
+
+    section.main div[data-testid="stMetric"]::after,
+    [data-testid="stMain"] div[data-testid="stMetric"]::after {{
+        content: '';
+        position: absolute;
+        bottom: -20px;
+        right: -20px;
+        width: 80px;
+        height: 80px;
+        background: radial-gradient(circle, rgba(255, 193, 7, 0.08) 0%, transparent 70%);
+        pointer-events: none;
     }}
 
     section.main div[data-testid="stMetric"]:hover,
     [data-testid="stMain"] div[data-testid="stMetric"]:hover {{
-        border-color: rgba(255, 193, 7, 0.5) !important;
-        box-shadow: 0 4px 16px rgba(18, 18, 18, 0.08) !important;
+        border-color: rgba(255, 193, 7, 0.55) !important;
+        box-shadow: var(--shadow-yellow), var(--shadow-md) !important;
+        transform: translateY(-2px) !important;
+    }}
+
+    section.main [data-testid="stHorizontalBlock"] > [data-testid="column"]:nth-child(4n+2) div[data-testid="stMetric"],
+    [data-testid="stMain"] [data-testid="stHorizontalBlock"] > [data-testid="column"]:nth-child(4n+2) div[data-testid="stMetric"] {{
+        border-top-color: {primary_black} !important;
+        background: linear-gradient(155deg, {primary_white} 0%, #FAFAFA 60%, #F5F5F5 100%) !important;
+    }}
+
+    section.main [data-testid="stHorizontalBlock"] > [data-testid="column"]:nth-child(4n+3) div[data-testid="stMetric"],
+    [data-testid="stMain"] [data-testid="stHorizontalBlock"] > [data-testid="column"]:nth-child(4n+3) div[data-testid="stMetric"] {{
+        border-top-color: #FFD54F !important;
+    }}
+
+    section.main [data-testid="stHorizontalBlock"] > [data-testid="column"]:nth-child(4n) div[data-testid="stMetric"],
+    [data-testid="stMain"] [data-testid="stHorizontalBlock"] > [data-testid="column"]:nth-child(4n) div[data-testid="stMetric"] {{
+        border-top-color: #FFB300 !important;
     }}
 
     section.main div[data-testid="stMetric"] > div > div:first-child,
@@ -484,23 +645,35 @@ custom_css = f"""
         display: inline-flex;
         align-items: center;
         gap: 0.55rem;
-        padding: 0.45rem 0.85rem;
+        padding: 0.5rem 1rem;
         white-space: nowrap;
+        background: rgba(255, 255, 255, 0.8);
+        border: 1px solid rgba(18, 18, 18, 0.06);
+        border-radius: 999px;
+        box-shadow: var(--shadow-sm);
+        transition: box-shadow 0.2s ease, border-color 0.2s ease;
+    }}
+
+    .workflow-step:hover {{
+        border-color: rgba(255, 193, 7, 0.4);
+        box-shadow: 0 3px 12px rgba(255, 193, 7, 0.12);
     }}
 
     .workflow-step-num {{
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        width: 1.75rem;
-        height: 1.75rem;
-        background: {primary_black};
+        width: 1.85rem;
+        height: 1.85rem;
+        background: linear-gradient(145deg, {primary_black} 0%, #2a2a2a 100%);
         color: {primary_yellow};
         border-radius: 50%;
         font-size: 0.72rem;
         font-weight: 800;
         flex-shrink: 0;
         line-height: 1;
+        box-shadow: 0 2px 8px rgba(18, 18, 18, 0.2);
+        border: 1px solid rgba(255, 193, 7, 0.25);
     }}
 
     .workflow-step-text {{
@@ -513,10 +686,10 @@ custom_css = f"""
     .workflow-connector {{
         width: 2.25rem;
         height: 2px;
-        background: {primary_yellow};
-        opacity: 0.45;
+        background: linear-gradient(90deg, rgba(255, 193, 7, 0.2), {primary_yellow}, rgba(255, 193, 7, 0.2));
         flex-shrink: 0;
         align-self: center;
+        border-radius: 2px;
     }}
 
     @media (max-width: 680px) {{
@@ -543,10 +716,17 @@ custom_css = f"""
         display: flex;
         align-items: center;
         gap: 0.5rem;
-        padding: 0.45rem 0;
+        padding: 0.5rem 0.35rem;
         border-bottom: 1px solid #F0F0F0;
         color: #444;
         font-size: 0.875rem;
+        border-radius: 6px;
+        transition: background 0.15s ease, padding-left 0.15s ease;
+    }}
+
+    .column-list li:hover {{
+        background: rgba(255, 193, 7, 0.06);
+        padding-left: 0.55rem;
     }}
 
     .column-list li:last-child {{
@@ -591,14 +771,27 @@ custom_css = f"""
 
     /* Insights panel */
     .insights-panel {{
-        background: linear-gradient(135deg, #FFFBF0 0%, {primary_white} 100%);
-        border: 1px solid rgba(255, 193, 7, 0.3);
-        border-radius: 14px;
-        padding: 1.75rem 2rem;
+        background: linear-gradient(135deg, {accent_cream} 0%, {primary_white} 55%, #FEFEFC 100%);
+        border: 1px solid rgba(255, 193, 7, 0.32);
+        border-left: 4px solid {primary_yellow};
+        border-radius: var(--radius-md);
+        padding: 1.85rem 2.1rem;
         line-height: 1.75;
         color: #333;
         font-size: 0.95rem;
-        box-shadow: 0 2px 12px rgba(255, 193, 7, 0.08);
+        box-shadow: var(--shadow-yellow), var(--shadow-sm);
+        position: relative;
+    }}
+
+    .insights-panel::before {{
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 100px;
+        height: 100px;
+        background: radial-gradient(circle, rgba(255, 193, 7, 0.1) 0%, transparent 70%);
+        pointer-events: none;
     }}
 
     .insights-panel strong {{
@@ -607,11 +800,35 @@ custom_css = f"""
 
     /* Chart container */
     .chart-container {{
-        background: {primary_white};
-        border: 1px solid {border_color};
-        border-radius: 14px;
-        padding: 1.25rem 1.5rem 0.5rem;
-        box-shadow: 0 2px 12px rgba(18, 18, 18, 0.04);
+        background: linear-gradient(180deg, {primary_white} 0%, #FDFDFB 100%);
+        border: 1px solid rgba(18, 18, 18, 0.07);
+        border-radius: var(--radius-md);
+        padding: 1.35rem 1.6rem 0.75rem;
+        box-shadow: var(--shadow-sm), var(--shadow-md);
+        margin-bottom: 0.5rem;
+        position: relative;
+        overflow: hidden;
+    }}
+
+    .chart-container::before {{
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, {primary_yellow}, {primary_black} 60%, transparent);
+        opacity: 0.7;
+    }}
+
+    section.main [data-testid="stPlotlyChart"],
+    [data-testid="stMain"] [data-testid="stPlotlyChart"] {{
+        background: {primary_white} !important;
+        border: 1px solid rgba(18, 18, 18, 0.06) !important;
+        border-radius: var(--radius-md) !important;
+        padding: 0.75rem !important;
+        box-shadow: var(--shadow-sm) !important;
+        overflow: hidden !important;
     }}
 
     .chart-meta {{
@@ -631,13 +848,15 @@ custom_css = f"""
 
     .chart-type-badge {{
         display: inline-flex;
-        padding: 0.25rem 0.7rem;
-        background: {primary_black};
+        padding: 0.3rem 0.8rem;
+        background: linear-gradient(135deg, {primary_black} 0%, #2d2d2d 100%);
         color: {primary_yellow};
-        border-radius: 6px;
+        border-radius: 8px;
         font-size: 0.72rem;
         font-weight: 700;
         letter-spacing: 0.04em;
+        border: 1px solid rgba(255, 193, 7, 0.2);
+        box-shadow: 0 2px 8px rgba(18, 18, 18, 0.15);
     }}
 
     /* Results summary bar */
@@ -646,11 +865,12 @@ custom_css = f"""
         align-items: center;
         gap: 1.5rem;
         flex-wrap: wrap;
-        padding: 0.85rem 1.25rem;
-        background: #FAFAFA;
-        border: 1px solid {border_color};
-        border-radius: 10px;
+        padding: 1rem 1.4rem;
+        background: linear-gradient(90deg, {accent_cream} 0%, {primary_white} 50%, #FAFAFA 100%);
+        border: 1px solid rgba(255, 193, 7, 0.22);
+        border-radius: var(--radius-sm);
         margin-bottom: 1.25rem;
+        box-shadow: var(--shadow-sm);
     }}
 
     .results-summary-item {{
@@ -670,10 +890,22 @@ custom_css = f"""
     .empty-state {{
         text-align: center;
         padding: 3.5rem 2rem;
-        background: {primary_white};
-        border: 1px solid {border_color};
-        border-radius: 16px;
-        box-shadow: 0 4px 24px rgba(18, 18, 18, 0.05);
+        background: linear-gradient(180deg, {primary_white} 0%, #FDFDFB 60%, {accent_cream} 100%);
+        border: 1px solid rgba(18, 18, 18, 0.07);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-md), var(--shadow-lg);
+        position: relative;
+        overflow: hidden;
+    }}
+
+    .empty-state::before {{
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, {primary_yellow}, {primary_black}, {primary_yellow});
     }}
 
     .empty-state-icon {{
@@ -714,13 +946,20 @@ custom_css = f"""
     }}
 
     .empty-state-tip {{
-        background: #FAFAFA;
-        border: 1px solid {border_color};
-        border-radius: 10px;
-        padding: 1rem 1.1rem;
+        background: linear-gradient(180deg, {primary_white} 0%, #FAFAFA 100%);
+        border: 1px solid rgba(18, 18, 18, 0.06);
+        border-radius: var(--radius-sm);
+        padding: 1.1rem 1.2rem;
         font-size: 0.82rem;
         color: #666;
         line-height: 1.5;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+    }}
+
+    .empty-state-tip:hover {{
+        border-color: rgba(255, 193, 7, 0.35);
+        box-shadow: 0 4px 14px rgba(255, 193, 7, 0.1);
+        transform: translateY(-2px);
     }}
 
     .empty-state-tip strong {{
@@ -751,10 +990,16 @@ custom_css = f"""
 
     section.main [data-testid="stDataFrame"],
     [data-testid="stMain"] [data-testid="stDataFrame"] {{
-        border: 1px solid {border_color} !important;
-        border-radius: 12px !important;
+        border: 1px solid rgba(18, 18, 18, 0.08) !important;
+        border-radius: var(--radius-md) !important;
         overflow: hidden !important;
-        box-shadow: 0 1px 4px rgba(18, 18, 18, 0.04) !important;
+        box-shadow: var(--shadow-sm), var(--shadow-md) !important;
+        background: {primary_white} !important;
+    }}
+
+    section.main [data-testid="stDataFrame"] [data-testid="stDataFrameResizable"],
+    [data-testid="stMain"] [data-testid="stDataFrame"] [data-testid="stDataFrameResizable"] {{
+        border-radius: var(--radius-md) !important;
     }}
 
     section.main .stCode, section.main pre,
@@ -762,13 +1007,6 @@ custom_css = f"""
         border-radius: 0 0 12px 12px !important;
         margin-top: 0 !important;
         border: none !important;
-    }}
-
-    section.main [data-testid="stExpander"],
-    [data-testid="stMain"] [data-testid="stExpander"] {{
-        border: 1px solid {border_color} !important;
-        border-radius: 12px !important;
-        background: {primary_white} !important;
     }}
 
     /* Action bar */
@@ -881,14 +1119,14 @@ custom_css = f"""
         flex-direction: column;
         align-items: center;
         text-align: center !important;
-        padding: 2.5rem 2rem 2rem;
+        padding: 2.75rem 2.25rem 2.25rem;
         width: 100%;
-        max-width: 720px;
-        margin: 0 auto 0.5rem;
-        background: {primary_white};
-        border: 1px solid rgba(18, 18, 18, 0.08);
-        border-radius: 20px;
-        box-shadow: 0 2px 4px rgba(18, 18, 18, 0.04), 0 12px 40px rgba(18, 18, 18, 0.07);
+        max-width: 740px;
+        margin: 1.25rem auto 0.5rem;
+        background: linear-gradient(165deg, {primary_white} 0%, #FDFDFB 45%, {accent_cream} 100%);
+        border: 1px solid rgba(18, 18, 18, 0.07);
+        border-radius: 22px;
+        box-shadow: var(--shadow-sm), var(--shadow-lg);
         position: relative;
         overflow: hidden;
         box-sizing: border-box;
@@ -900,8 +1138,20 @@ custom_css = f"""
         top: 0;
         left: 0;
         right: 0;
-        height: 3px;
-        background: linear-gradient(90deg, {primary_yellow}, {primary_black}, {primary_yellow});
+        height: 4px;
+        background: linear-gradient(90deg, {primary_yellow}, {primary_black} 45%, {primary_yellow});
+    }}
+
+    .app-hero::after {{
+        content: '';
+        position: absolute;
+        bottom: -60px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 280px;
+        height: 120px;
+        background: radial-gradient(ellipse, rgba(255, 193, 7, 0.12) 0%, transparent 70%);
+        pointer-events: none;
     }}
 
     [data-testid="stMarkdown"] .app-hero,
@@ -963,18 +1213,127 @@ custom_css = f"""
     .app-hero-badge {{
         display: inline-block;
         margin-top: 1.15rem;
-        padding: 0.4rem 0.95rem;
-        background: rgba(255, 193, 7, 0.12);
+        padding: 0.45rem 1.05rem;
+        background: linear-gradient(135deg, rgba(255, 193, 7, 0.18) 0%, rgba(255, 193, 7, 0.08) 100%);
         color: {primary_black} !important;
-        border: 1px solid rgba(255, 193, 7, 0.35);
+        border: 1px solid rgba(255, 193, 7, 0.4);
         border-radius: 999px;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
         font-size: 0.72rem;
-        font-weight: 600;
-        letter-spacing: 0.02em !important;
+        font-weight: 700;
+        letter-spacing: 0.03em !important;
         word-spacing: normal !important;
         text-transform: none;
         text-align: center !important;
+        box-shadow: 0 2px 10px rgba(255, 193, 7, 0.14);
+    }}
+
+    /* Main-area buttons (sidebar unchanged) */
+    section.main .stButton > button,
+    [data-testid="stMain"] .stButton > button {{
+        background: linear-gradient(180deg, {primary_yellow} 0%, #FFB300 100%) !important;
+        color: {primary_black} !important;
+        border: 1px solid rgba(18, 18, 18, 0.08) !important;
+        border-radius: 10px !important;
+        font-weight: 700 !important;
+        padding: 0.65rem 2rem !important;
+        font-size: 1rem !important;
+        letter-spacing: 0.01em !important;
+        box-shadow: 0 2px 8px rgba(255, 193, 7, 0.25), 0 1px 2px rgba(18, 18, 18, 0.06) !important;
+        transition: all 0.25s ease !important;
+    }}
+
+    section.main .stButton > button:hover,
+    [data-testid="stMain"] .stButton > button:hover {{
+        background: linear-gradient(180deg, #FFD54F 0%, {primary_yellow} 100%) !important;
+        transform: translateY(-2px) !important;
+        box-shadow: var(--shadow-yellow), 0 2px 4px rgba(18, 18, 18, 0.08) !important;
+    }}
+
+    section.main .stButton > button:active,
+    [data-testid="stMain"] .stButton > button:active {{
+        transform: translateY(0) !important;
+    }}
+
+    section.main .stDownloadButton > button,
+    [data-testid="stMain"] .stDownloadButton > button {{
+        background: linear-gradient(180deg, {primary_white} 0%, #F5F5F5 100%) !important;
+        color: {primary_black} !important;
+        border: 1px solid rgba(18, 18, 18, 0.12) !important;
+        border-radius: 10px !important;
+        font-weight: 600 !important;
+        box-shadow: var(--shadow-sm) !important;
+        transition: all 0.25s ease !important;
+    }}
+
+    section.main .stDownloadButton > button:hover,
+    [data-testid="stMain"] .stDownloadButton > button:hover {{
+        background: linear-gradient(180deg, {accent_cream} 0%, {primary_white} 100%) !important;
+        border-color: rgba(255, 193, 7, 0.45) !important;
+        box-shadow: var(--shadow-yellow) !important;
+        transform: translateY(-1px) !important;
+    }}
+
+    /* Main-area form controls */
+    section.main .stTextArea textarea,
+    [data-testid="stMain"] .stTextArea textarea {{
+        background: {primary_white} !important;
+        border: 2px solid rgba(255, 193, 7, 0.35) !important;
+        border-radius: var(--radius-sm) !important;
+        box-shadow: inset 0 1px 3px rgba(18, 18, 18, 0.04) !important;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+    }}
+
+    section.main .stTextArea textarea:focus,
+    [data-testid="stMain"] .stTextArea textarea:focus {{
+        border-color: {primary_yellow} !important;
+        box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.15), inset 0 1px 3px rgba(18, 18, 18, 0.04) !important;
+    }}
+
+    section.main [data-baseweb="select"] > div,
+    [data-testid="stMain"] [data-baseweb="select"] > div {{
+        border-color: rgba(255, 193, 7, 0.35) !important;
+        border-radius: var(--radius-sm) !important;
+        background: {primary_white} !important;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+    }}
+
+    section.main [data-baseweb="select"] > div:hover,
+    [data-testid="stMain"] [data-baseweb="select"] > div:hover {{
+        border-color: {primary_yellow} !important;
+    }}
+
+    section.main [data-testid="stExpander"],
+    [data-testid="stMain"] [data-testid="stExpander"] {{
+        border: 1px solid rgba(18, 18, 18, 0.07) !important;
+        border-radius: var(--radius-md) !important;
+        background: linear-gradient(180deg, {primary_white}, #FAFAFA) !important;
+        box-shadow: var(--shadow-sm) !important;
+    }}
+
+    /* SQL panel polish */
+    section.main .sql-panel,
+    [data-testid="stMain"] .sql-panel {{
+        box-shadow: 0 8px 32px rgba(18, 18, 18, 0.18), 0 0 0 1px rgba(255, 193, 7, 0.15);
+    }}
+
+    section.main .sql-panel-header,
+    [data-testid="stMain"] .sql-panel-header {{
+        background: linear-gradient(90deg, rgba(255, 193, 7, 0.12) 0%, rgba(255, 193, 7, 0.04) 100%);
+    }}
+
+    /* Alert polish in main area */
+    section.main .stSuccess,
+    [data-testid="stMain"] .stSuccess {{
+        border-radius: var(--radius-sm) !important;
+        box-shadow: var(--shadow-sm) !important;
+    }}
+
+    section.main .stInfo,
+    [data-testid="stMain"] .stInfo {{
+        background: linear-gradient(90deg, {accent_cream} 0%, #E3F2FD 100%) !important;
+        border-radius: var(--radius-sm) !important;
+        box-shadow: var(--shadow-sm) !important;
     }}
 </style>
 """
@@ -1131,16 +1490,52 @@ def build_plotly_figure(data: pd.DataFrame, chart_type: str, primary_yellow: str
         raise ValueError("Unsupported chart type selected.")
 
     fig.update_layout(
-        plot_bgcolor="white",
+        plot_bgcolor="#FEFEFC",
         paper_bgcolor="white",
-        font=dict(family="Arial", size=12, color=primary_black),
-        title_font_size=16,
-        height=450,
+        font=dict(family="Segoe UI, Arial, sans-serif", size=12, color=primary_black),
+        title=dict(
+            font=dict(size=17, color=primary_black, family="Segoe UI, Arial, sans-serif"),
+            x=0.02,
+            xanchor="left",
+        ),
+        title_font_size=17,
+        height=460,
+        margin=dict(l=48, r=32, t=56, b=48),
         showlegend=False,
-        hovermode="x unified"
+        hovermode="x unified",
+        hoverlabel=dict(
+            bgcolor=primary_black,
+            font_color=primary_yellow,
+            font_size=12,
+            bordercolor=primary_yellow,
+        ),
     )
-    fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor="#f0f0f0")
-    fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor="#f0f0f0")
+    fig.update_xaxes(
+        showgrid=True,
+        gridwidth=1,
+        gridcolor="rgba(18, 18, 18, 0.06)",
+        linecolor="rgba(18, 18, 18, 0.12)",
+        tickfont=dict(color="#666"),
+    )
+    fig.update_yaxes(
+        showgrid=True,
+        gridwidth=1,
+        gridcolor="rgba(18, 18, 18, 0.06)",
+        linecolor="rgba(18, 18, 18, 0.12)",
+        tickfont=dict(color="#666"),
+    )
+    fig.update_traces(
+        marker=dict(
+            line=dict(color=primary_black, width=0.5),
+            opacity=0.92,
+        ),
+        selector=dict(type="bar"),
+    )
+    fig.update_traces(
+        line=dict(width=2.5, color=primary_yellow),
+        marker=dict(size=7, color=primary_yellow, line=dict(color=primary_black, width=1)),
+        selector=dict(type="scatter"),
+    )
 
     return fig, chart_type
 
@@ -1727,16 +2122,17 @@ render_section_header(
     "Import a CSV or Excel file to begin your analysis session",
 )
 
-st.markdown('<div class="content-panel content-panel-accent">', unsafe_allow_html=True)
 st.markdown(
     """
-    <div class="panel-header">
-        <div class="panel-header-text">
-            <p class="panel-eyebrow">Data Source</p>
-            <p class="panel-title">Select your dataset</p>
-            <p class="panel-desc">Supported formats: CSV, XLSX, XLS — up to standard file sizes</p>
+    <div class="content-panel content-panel-accent">
+        <div class="panel-header" style="margin-bottom:0;padding-bottom:0;border-bottom:none;">
+            <div class="panel-header-text">
+                <p class="panel-eyebrow">Data Source</p>
+                <p class="panel-title">Select your dataset</p>
+                <p class="panel-desc">Supported formats: CSV, XLSX, XLS — up to standard file sizes</p>
+            </div>
+            <span class="panel-badge">Step 1 of 3</span>
         </div>
-        <span class="panel-badge">Step 1 of 3</span>
     </div>
     """,
     unsafe_allow_html=True,
@@ -1747,7 +2143,6 @@ uploaded_file = st.file_uploader(
     type=["csv", "xlsx", "xls"],
     help="Select a CSV or Excel (.xlsx / .xls) file to analyze with AI"
 )
-st.markdown('</div>', unsafe_allow_html=True)
 
 if uploaded_file is not None:
     # Basic validations
@@ -1928,16 +2323,17 @@ if uploaded_file is not None:
         "Describe what you want to know — AI will generate and run the SQL for you",
     )
 
-    st.markdown('<div class="content-panel content-panel-accent">', unsafe_allow_html=True)
     st.markdown(
         """
-        <div class="panel-header">
-            <div class="panel-header-text">
-                <p class="panel-eyebrow">Natural Language Query</p>
-                <p class="panel-title">What would you like to analyze?</p>
-                <p class="panel-desc">Be specific for best results — mention columns, filters, aggregations, or limits.</p>
+        <div class="content-panel content-panel-accent">
+            <div class="panel-header" style="margin-bottom:0;padding-bottom:0;border-bottom:none;">
+                <div class="panel-header-text">
+                    <p class="panel-eyebrow">Natural Language Query</p>
+                    <p class="panel-title">What would you like to analyze?</p>
+                    <p class="panel-desc">Be specific for best results — mention columns, filters, aggregations, or limits.</p>
+                </div>
+                <span class="panel-badge">Step 2 of 3</span>
             </div>
-            <span class="panel-badge">Step 2 of 3</span>
         </div>
         """,
         unsafe_allow_html=True,
@@ -1956,10 +2352,8 @@ if uploaded_file is not None:
         index=0,
         help="Auto chooses the best chart for the result, or select the type you want explicitly."
     )
-    st.markdown('</div>', unsafe_allow_html=True)
 
     # Generate Button with formatting
-    st.markdown('<div class="action-bar">', unsafe_allow_html=True)
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         if st.button("🚀 Generate Insights", use_container_width=True, key="generate_btn"):
@@ -2024,12 +2418,12 @@ User Question:
                                 <p class="sql-panel-title">SQL Query</p>
                                 <span class="panel-badge" style="background:rgba(255,193,7,0.15);border-color:rgba(255,193,7,0.3);">SELECT only</span>
                             </div>
+                        </div>
                         """,
                         unsafe_allow_html=True
                     )
 
                     st.code(sql_query, language="sql")
-                    st.markdown("</div>", unsafe_allow_html=True)
 
                     # Execute Query
                     conn = sqlite3.connect("database.db")
@@ -2059,13 +2453,11 @@ User Question:
                             unsafe_allow_html=True,
                         )
 
-                        st.markdown('<div class="content-panel content-panel-compact" style="padding:1rem 1.25rem;">', unsafe_allow_html=True)
                         st.dataframe(
                             result,
                             hide_index=True,
                             use_container_width=True
                         )
-                        st.markdown('</div>', unsafe_allow_html=True)
 
                         generate_kpis(result)
 
@@ -2085,7 +2477,7 @@ User Question:
                         with col1:
                             st.markdown(
                                 f"""
-                                <div class="dash-stat-card">
+                                <div class="dash-stat-card dash-stat-card--rows">
                                     <div class="dash-stat-icon">📊</div>
                                     <p class="dash-stat-label">Rows</p>
                                     <p class="dash-stat-value">{len(result):,}</p>
@@ -2096,7 +2488,7 @@ User Question:
                         with col2:
                             st.markdown(
                                 f"""
-                                <div class="dash-stat-card">
+                                <div class="dash-stat-card dash-stat-card--cols">
                                     <div class="dash-stat-icon">📑</div>
                                     <p class="dash-stat-label">Columns</p>
                                     <p class="dash-stat-value">{len(result.columns)}</p>
@@ -2271,7 +2663,6 @@ Format your response as a numbered list with clear, practical insights."""
                     st.error(f"❌ {format_api_error(e)}", icon="❌")
 
     st.markdown('<p class="action-bar-note">Results include SQL, data table, KPIs, charts, and AI insights</p>', unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
 
 else:
     # Empty State
