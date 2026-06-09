@@ -1857,6 +1857,18 @@ def extract_kpi_values(result: pd.DataFrame) -> dict:
     return kpis
 
 
+def _cover_title_font_size(text: str) -> int:
+    """Scale cover title font down for long text so it wraps cleanly without crowding."""
+    length = len(text.replace("<br/>", "").replace("<br>", ""))
+    if length <= 28:
+        return 36
+    if length <= 42:
+        return 30
+    if length <= 58:
+        return 26
+    return 22
+
+
 def create_pdf_title_page(story, primary_yellow: str, primary_black: str):
     """
     Add professional title page to PDF.
@@ -1867,50 +1879,77 @@ def create_pdf_title_page(story, primary_yellow: str, primary_black: str):
         primary_black: Primary color hex code
     """
     styles = getSampleStyleSheet()
-    
-    # Title
-    title_style = ParagraphStyle(
-        'CustomTitle',
-        parent=styles['Heading1'],
-        fontSize=42,
-        textColor=HexColor(primary_black),
-        spaceAfter=12,
-        alignment=TA_CENTER,
-        fontName='Helvetica-Bold'
-    )
-    
-    story.append(Spacer(1, 1.2 * inch))
-    if LOGO_PATH.exists():
-        logo_img = Image(str(LOGO_PATH), width=1.4 * inch, height=1.4 * inch)
-        logo_img.hAlign = "CENTER"
-        story.append(logo_img)
-        story.append(Spacer(1, 0.35 * inch))
-    story.append(Paragraph("AI Data Analyst Assistant", title_style))
-    story.append(Paragraph("Professional Report", title_style))
-    story.append(Spacer(1, 0.5 * inch))
-    
-    # Subtitle
-    subtitle_style = ParagraphStyle(
-        'CustomSubtitle',
+
+    main_title_text = "AI Data Analyst<br/>Assistant"
+    report_subtitle = "Professional Report"
+    main_font_size = _cover_title_font_size(main_title_text)
+
+    main_title_style = ParagraphStyle(
+        'CoverMainTitle',
         parent=styles['Normal'],
-        fontSize=14,
+        fontSize=main_font_size,
+        leading=main_font_size * 1.35,
+        textColor=HexColor(primary_black),
+        alignment=TA_CENTER,
+        fontName='Helvetica-Bold',
+        spaceBefore=0,
+        spaceAfter=14,
+    )
+
+    report_subtitle_style = ParagraphStyle(
+        'CoverReportSubtitle',
+        parent=styles['Normal'],
+        fontSize=20,
+        leading=26,
+        textColor=HexColor('#4A4A4A'),
+        alignment=TA_CENTER,
+        fontName='Helvetica',
+        spaceBefore=0,
+        spaceAfter=28,
+    )
+
+    date_style = ParagraphStyle(
+        'CoverDate',
+        parent=styles['Normal'],
+        fontSize=12,
+        leading=16,
         textColor=HexColor(primary_yellow),
         alignment=TA_CENTER,
-        spaceAfter=24
+        fontName='Helvetica',
+        spaceBefore=0,
+        spaceAfter=0,
     )
-    story.append(Paragraph(f"Generated on {datetime.now().strftime('%B %d, %Y at %I:%M %p')}", subtitle_style))
-    
-    story.append(Spacer(1, 1.5 * inch))
-    
-    # Footer text
+
     footer_style = ParagraphStyle(
-        'Footer',
+        'CoverFooter',
         parent=styles['Normal'],
         fontSize=11,
+        leading=14,
         textColor=grey,
         alignment=TA_CENTER,
-        spaceAfter=12
+        fontName='Helvetica',
+        spaceBefore=0,
+        spaceAfter=0,
     )
+
+    story.append(Spacer(1, 1.4 * inch))
+    if LOGO_PATH.exists():
+        logo_img = Image(str(LOGO_PATH), width=1.35 * inch, height=1.35 * inch)
+        logo_img.hAlign = "CENTER"
+        story.append(logo_img)
+        story.append(Spacer(1, 0.45 * inch))
+
+    story.append(Paragraph(main_title_text, main_title_style))
+    story.append(Spacer(1, 0.1 * inch))
+    story.append(Paragraph(report_subtitle, report_subtitle_style))
+    story.append(Spacer(1, 0.55 * inch))
+    story.append(
+        Paragraph(
+            f"Generated on {datetime.now().strftime('%B %d, %Y at %I:%M %p')}",
+            date_style,
+        )
+    )
+    story.append(Spacer(1, 1.35 * inch))
     story.append(Paragraph("Transform Your Data Into Actionable Insights", footer_style))
     story.append(PageBreak())
 
